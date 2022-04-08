@@ -7,9 +7,9 @@ import java.awt.event.ActionEvent;
 class Room {
 	private boolean booked;
 	private boolean viewable;
-	private double price; //per night (fixed)
-	private String capacity; //single, double, triple
-	private String name; 
+	public double price; //per night (fixed)
+	public String capacity; //single, double, triple
+	public String name; 
 	
 	public Room (String name, String capacity, double price){
 		booked = false;
@@ -22,6 +22,11 @@ class Room {
 	
 	public void launchRoom() {
 		
+	}
+	
+	@Override
+	public String toString (){
+		return String.format("Room name: %s%nCapacity: %s%nPrice: %.2f%n", name, capacity, price);
 	}
 }
 
@@ -68,15 +73,17 @@ class LoginPage extends JFrame implements ActionListener{
 	@Override
 	public void actionPerformed (ActionEvent e){
 		if (e.getSource() == staffb){
-			StaffPage lf = new StaffPage ();
-			lf.setVisible (true);
-			lf.setSize (400, 600);
-			lf.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
+			StaffPage sp = new StaffPage ();
+			sp.setVisible (true);
+			sp.setSize (400, 600);
+			this.dispose(); //dispose after creating the frame 
+			
+			//lf.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
 		}
 	}
 }
 
-class StaffPage extends JFrame {
+class StaffPage extends JFrame implements ActionListener{
 	private JButton createRoom;
 	
 	public StaffPage () {
@@ -85,7 +92,64 @@ class StaffPage extends JFrame {
 		
 		createRoom = new JButton ("Create room");
 		add (createRoom);
+		createRoom.addActionListener(this);
+	}
+	
+	@Override
+	public void actionPerformed (ActionEvent e){
+		if (e.getSource() == createRoom){
+			CreateRoom lf = new CreateRoom ();
+			lf.setVisible (true);
+			lf.setSize (400, 600);
+			//lf.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
+		}
+	}
+}
+
+class CreateRoom extends JFrame implements ActionListener{
+	private JTextField nameInput;
+	private JLabel name;
+	private JTextField capacityInput;
+	private JLabel capacity;
+	private JTextField priceInput;
+	private JLabel price;
+	private JButton create;
+	
+	public CreateRoom (){
+		super("Create room");
+		setLayout (new FlowLayout());
 		
+		name = new JLabel ("Name of room");
+		add (name);
+		nameInput = new JTextField (10);
+		add (nameInput);
+		
+		capacity = new JLabel ("Capacity of room?");
+		add (capacity);
+		
+		capacityInput = new JTextField (10);
+		add (capacityInput);
+		
+		price = new JLabel ("Price: ");
+		add (price);
+		priceInput = new JTextField (10);
+		add (priceInput);
+		
+		create = new JButton ("Create");
+		add (create);
+		create.addActionListener(this);
+	}
+	
+	@Override
+	public void actionPerformed (ActionEvent e){
+		if (e.getSource() == create){
+			Room room = new Room (nameInput.getText(), capacityInput.getText(), Double.parseDouble(priceInput.getText()));
+			roomBooking.rooms.add(room);
+			
+			JOptionPane.showMessageDialog (CreateRoom.this, String.format("Room name: %s%nCapacity: %s%nPrice: %.2f%n", room.name, room.capacity, room.price));
+			//System.out.print(room);
+		
+		}
 	}
 }
 
@@ -101,6 +165,10 @@ class roomBooking
 		LoginPage lf = new LoginPage ();
 		lf.setVisible (true);
 		lf.setSize (400, 600);
-		lf.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
+		//lf.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
+		
+		for (Room r : rooms){
+			System.out.print(r);
+		}
 	}
 }
