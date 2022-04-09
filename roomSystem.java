@@ -80,31 +80,16 @@ class Staff {
 public class roomSystem extends Application {
 	public static ArrayList <Staff> staffs = new ArrayList <Staff>(); 
 	public static ArrayList <Student> students = new ArrayList <Student>();
-
-    @Override
-    public void start(Stage stage) {
-		//logInPage(stage);
-        
-		/*Button b = new Button ("Test button");
-        Label l = new Label("Welcome to UOW accomodations");
-		VBox sp = new VBox ();
-		sp.getChildren().add(b);
-		sp.getChildren().add(l);
-		b.setOnAction(e -> LoggedIn());
-			
-			
-        Scene scene = new Scene(sp, 640, 480);
-
-        stage.setScene(scene);
-        stage.show();*/
-		
-		logInPage();
-    }
-
-    public static void main(String[] args) {
+	
+	public static void main(String[] args){
 		Staff staff = new Staff ("Kirk", 1234);
 		staffs.add(staff);
         launch(args);
+    }
+	
+    @Override
+    public void start(Stage stage) {
+		logInPage();
     }
 	
 	//default login page
@@ -140,33 +125,32 @@ public class roomSystem extends Application {
 		
 		//add login button
 		Button loginButton = new Button ("Login");
+		grid.getChildren().add(loginButton);
 		
 		//adding action lister
 		loginButton.setOnAction (e -> {
-			verifyLogin (nameInput.getText(), Integer.valueOf(passInput.getText()));
+			if(verifyLogin (nameInput.getText(), Integer.valueOf(passInput.getText()))){
+				LoggedIn();
+			}
 		});
 		
 		GridPane.setConstraints(loginButton, 1, 2); //first column, third row
 		
-		//add sign up label and button
+		//add sign up label 
 		Label signup = new Label ("Don't have an account yet?");
 		GridPane.setConstraints(signup, 0, 3);
 		grid.getChildren().add(signup);
 		
+		//add sign up button to change to sign up page
 		Button signupButton = new Button ("Sign up");
 		GridPane.setConstraints(signupButton, 1, 3);
-		signupButton.setOnAction (e -> signUpPage());
+		signupButton.setOnAction (e -> studentOrStaff());
 		grid.getChildren().add(signupButton);
 		
-		
-		
-		//add button 
-		grid.getChildren().add(loginButton);
+		//add layout to scene and window
 		Scene scene = new Scene (grid, 300, 200);
 		window.setScene (scene);
 		window.show();
-		
-		
 	}
 	
 	//verify login (check if user exist and password is correct)
@@ -184,7 +168,7 @@ public class roomSystem extends Application {
 	}
 	
 	//sign up page 
-	//add re-enter password and logic
+	//maybe add re-enter password and logic?
 	public void signUpPage (){
 		//create new stage 
 		Stage window = new Stage ();
@@ -216,28 +200,30 @@ public class roomSystem extends Application {
 		grid.getChildren().addAll(nameLabel, nameInput, passLabel, passInput);
 		
 		//add login button
-		Button loginButton = new Button ("Signup");
+		Button signupButton = new Button ("Signup");
 		
 		//adding action lister
-		loginButton.setOnAction (e -> {
-			String userName = nameInput.getText();
-			int password = Integer.valueOf(passInput.getText());
+		signupButton.setOnAction (e -> {
 			
-			
-			
+			if (!userExists(nameInput.getText())){
+				signUpStaff(nameInput.getText(), Integer.valueOf(passInput.getText()));
+				window.close();
+			} else {
+				System.out.println("User already exists");
+			}
 		});
 		
-		GridPane.setConstraints(loginButton, 1, 2); //first column, third row
+		GridPane.setConstraints(signupButton, 1, 2); //first column, third row
 		
 		//add button 
-		grid.getChildren().add(loginButton);
+		grid.getChildren().add(signupButton);
 		Scene scene = new Scene (grid, 300, 200);
 		window.setScene (scene);
 		window.show();
 	}
 	
 	//sign up helper mathods
-	public boolean userExists (String username){
+	public boolean userExists (String username){ //username is unique
 		for (Staff s : staffs){
 			if (s.getName().equals(username)){
 				return true;
@@ -251,9 +237,54 @@ public class roomSystem extends Application {
 		return false;
 	}
 	
+	//student or staff page 
+	public void studentOrStaff(){
+		//create new stage 
+		Stage window = new Stage ();
+		
+		//create layout
+		GridPane grid = new GridPane ();
+		grid.setPadding (new Insets(10, 10, 10, 10)); 
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		//Label text "are you student or staff?"
+		Label question = new Label ("Are you a student or staff");
+		GridPane.setConstraints(question, 0, 0);
+		grid.getChildren().add(question);
+		
+		//could maybe do radio/checkbox here
+		Button student = new Button ("Student");
+		Button staff = new Button ("Staff");
+		
+		//positioning
+		GridPane.setConstraints(student, 0, 1);
+		GridPane.setConstraints(staff, 1, 1);
+		
+		//add button
+		grid.getChildren().addAll(student, staff);
+		
+		//add action listeners
+		staff.setOnAction (e -> {
+			signUpPage();
+			window.close();
+		});
+		
+		Scene scene = new Scene (grid, 200, 300);
+		window.setScene (scene);
+		window.show();
+		
+	}
+	//sign up staff
 	public void signUpStaff(String username, int password){
 		Staff staff = new Staff (username, password);
 		staffs.add(staff);
+	}
+	
+	//sign up students
+	public void signUpStudent(String username, int password){
+		Student student = new Student (username, password);
+		students.add(student);
 	}
 	
 	public void LoggedIn () {
@@ -268,5 +299,11 @@ public class roomSystem extends Application {
 		window.setScene (scene);
 		window.show();
 	}
+	
+	public void staffLogInPage(){
+		
+	}
 }
+
+
 
