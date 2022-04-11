@@ -8,11 +8,16 @@ import javafx.geometry.Insets;
 
 import java.util.*;
 class Room {
-	private boolean booked;
-	private boolean viewable;
+	private boolean booked; 
+	private boolean viewable; //staff will make this viewable
 	public double price; //per night (fixed)
 	public String capacity; //single, double, triple
-	public String name; 
+	public String name; //suite 
+	//date i have no idea 
+	// booked on
+	// avaible from 
+	// noOfNights
+	// promo
 	
 	public Room (String name, String capacity, double price){
 		booked = false;
@@ -35,8 +40,8 @@ class Room {
 
 class Student {
 	//private final int id;
-	private int password;
-	private String name;
+	private int password; //1234
+	private String name; //userid Kirk 
 	ArrayList <Room> bookedRooms;
 	private final String role;
 	
@@ -205,7 +210,7 @@ public class roomSystem extends Application {
 		//adding action lister
 		signupButton.setOnAction (e -> {
 			
-			if (!userExists(nameInput.getText())){
+			if (!userExists(nameInput.getText())){ //get unique id
 				signUpStaff(nameInput.getText(), Integer.valueOf(passInput.getText()));
 				window.close();
 			} else {
@@ -244,6 +249,7 @@ public class roomSystem extends Application {
 		
 		//create layout
 		GridPane grid = new GridPane ();
+		
 		grid.setPadding (new Insets(10, 10, 10, 10)); 
 		grid.setVgap(8);
 		grid.setHgap(10);
