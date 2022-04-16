@@ -5,40 +5,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
+import javafx.collections.*;
+import javafx.scene.control.cell.*;
+
+import java.io.*;
+import java.nio.file.*;
 
 import java.util.*;
-class Room {
-	private boolean booked; 
-	private boolean viewable; //staff will make this viewable
-	public double price; //per night (fixed)
-	public String capacity; //single, double, triple
-	public String name; //suite 
-	//date i have no idea 
-	// booked on
-	// avaible from 
-	// noOfNights
-	// promo
-	
-	public Room (String name, String capacity, double price){
-		booked = false;
-		viewable = false; 
-		this.name = name; 
-		this.capacity = capacity;
-		this.price = price;
-		
-	}
-	
-	public void launchRoom() {
-		
-	}
-	
-	@Override
-	public String toString (){
-		return String.format("Room name: %s%nCapacity: %s%nPrice: %.2f%n", name, capacity, price);
-	}
-}
 
-class Student {
+
+class Student implements Serializable{
 	//private final int id;
 	private int password; //1234
 	private String name; //userid Kirk 
@@ -59,14 +35,23 @@ class Student {
 	public int getPassword(){
 		return password;
 	}
+	
+	public String getRole (){
+		return role;
+	}
 }
 
-class Staff {
+class Staff implements Serializable{
 	//private final int id;
 	private int password;
 	private String name;
 	private final String role;
 	
+	public Staff (){
+		password = 0;
+		name = "";
+		this.role = "Staff";
+	}
 	public Staff (String name, int password) {
 		this.name = name;
 		this.password = password;
@@ -80,15 +65,44 @@ class Staff {
 	public int getPassword(){
 		return password;
 	}
+	
+	public String getRole (){
+		return role;
+	}
 }
 
 public class roomSystem extends Application {
+	//arraylist for staff,student and room
 	public static ArrayList <Staff> staffs = new ArrayList <Staff>(); 
 	public static ArrayList <Student> students = new ArrayList <Student>();
+	public static ArrayList <Room> rooms = new ArrayList<Room> ();
+	
+	//instance variables for file processing
+	private static ObjectInputStream studentInput;
+	private static ObjectInputStream staffInput;
+	private static ObjectInputStream roomInput;
+	private static ObjectOutputStream studentOutput;
+	private static ObjectOutputStream staffOutput;
+	private static ObjectOutputStream roomOutput;
+	private static Formatter output;
+	
+	//TableView, show rooms window
+	public static TableView<Room> table;
 	
 	public static void main(String[] args){
+		openStaffFile("staffFile2.txt");
+		createStaffFile();
+		closeStaffFile();
+		readStaffFile("staffFile2.txt");
+		processStaffFile();
+		closeStaffInputFile();
 		Staff staff = new Staff ("Kirk", 1234);
+		students.add(new Student ("Study", 1234));
+		rooms.add(new Room("Deluxe", "Double", 150));
+		rooms.add(new Room("Premium", "Triple", 180));
+		rooms.add(new Room("Suite", "Double", 250));
 		staffs.add(staff);
+
         launch(args);
     }
 	
@@ -135,7 +149,11 @@ public class roomSystem extends Application {
 		//adding action lister
 		loginButton.setOnAction (e -> {
 			if(verifyLogin (nameInput.getText(), Integer.valueOf(passInput.getText()))){
-				LoggedIn();
+				if (getRole(nameInput.getText()).equals("Staff")){
+					staffLogInPage();
+				} else {
+					studentLogInPage();
+				}
 			}
 		});
 		
@@ -168,8 +186,31 @@ public class roomSystem extends Application {
 				}
 			}
 		}
-		return false;
 		
+		for (Student s : students){
+			if (s.getName().equals(userID)){
+				if (s.getPassword() == password){
+					System.out.println("Authenticated");
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public String getRole (String userID){
+		for (Staff s : staffs){
+			if (s.getName().equals(userID)){
+				return s.getRole();
+			}
+		}
+		
+		for (Student st : students){
+			if(st.getName().equals(userID)){
+				return st.getRole();
+			}
+		}
+		return "Role not found";
 	}
 	
 	//sign up page 
@@ -293,9 +334,26 @@ public class roomSystem extends Application {
 		students.add(student);
 	}
 	
-	public void LoggedIn () {
+	public void staffLogInPage(){
 		Stage window = new Stage ();
-		window.setTitle("You have logged in");
+		window.setTitle("(Staff) You have logged in");
+		
+		Label label = new Label ("Welcome to UOW accomodations");
+		StackPane sp = new StackPane ();
+		
+		sp.getChildren().add(label);
+		
+		Button b = new Button ("Show all rooms");
+		b.setOnAction(e -> showAllRooms());
+		sp.getChildren().add(b);
+		Scene scene = new Scene (sp, 640, 480);
+		window.setScene (scene);
+		window.show();
+	}
+	
+	public void studentLogInPage(){
+		Stage window = new Stage ();
+		window.setTitle("(Student) You have logged in");
 		
 		Label label = new Label ("Welcome to UOW accomodations");
 		StackPane sp = new StackPane ();
@@ -304,10 +362,112 @@ public class roomSystem extends Application {
 		Scene scene = new Scene (sp, 640, 480);
 		window.setScene (scene);
 		window.show();
+	}	
+	
+	//view rooms window
+	public static ObservableList<Room> getRooms(){
+		ObservableList<Room> allRooms = FXCollections.observableArrayList();
+		for (Room r : rooms){
+			allRooms.add(r);
+		}
+		
+		return allRooms;
 	}
 	
-	public void staffLogInPage(){
+	@SuppressWarnings("unchecked")
+	public static void showAllRooms(){
+		Stage window = new Stage ();
+		window.setTitle("Show all rooms");
 		
+		TableColumn<Room, String> nameColumn = new TableColumn<Room, String>("Name");
+		nameColumn.setMinWidth(200);
+		nameColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("name"));
+		
+		TableColumn<Room, String> capacityColumn = new TableColumn<Room, String>("Capacity");
+		capacityColumn.setMinWidth(200);
+		capacityColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("capacity"));		
+		
+		TableColumn<Room, String> priceColumn = new TableColumn<Room, String>("Price");
+		priceColumn.setMinWidth(200);
+		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));		
+				
+		table = new TableView<Room>();
+		table.setItems(getRooms());
+		table.getColumns().addAll(priceColumn, capacityColumn,nameColumn );
+		
+		//create layout
+		VBox vBox = new VBox();
+		vBox.getChildren().addAll(table);
+		
+		Scene scene = new Scene (vBox);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	//file processing methods
+	//create StaffFile (for closing application)
+	private static void openStaffFile (String fileName){
+		try{
+			staffOutput = new ObjectOutputStream(Files.newOutputStream(Paths.get(fileName)));
+		} catch (IOException e){
+			System.out.println("Error in opening file");
+		}
+	}
+	
+	private static void createStaffFile (){
+		try {
+			//staffOutput.writeObject (new Staff ("Kqirk", 1234));
+			staffOutput.writeObject (new Staff ("Admin", 1234));
+			for (Staff s : staffs){
+				staffOutput.writeObject(s);
+			}
+			System.out.println("Kqirk written to staffoutput");
+		} catch (IOException e){
+			System.out.println("Error in writing to file");
+		}
+	}
+	
+	private static void closeStaffFile(){
+		try {
+			if (staffOutput != null){
+				staffOutput.close();
+			}
+		} catch (IOException e){
+			System.out.println("Error in closing file");
+		}
+	}
+	
+	//process StaffFile (when opening application for past sessions)
+	private static void readStaffFile (String fileName){
+		try{
+			staffInput = new ObjectInputStream(Files.newInputStream(Paths.get(fileName)));
+		} catch (IOException e){
+			System.out.println("Error in opening file");
+		}
+	}
+	
+	private static void processStaffFile (){
+		try{
+			while(true){
+				Staff s = (Staff)(staffInput.readObject());
+				staffs.add(s);
+			}
+		} catch (EOFException e){
+		} catch (ClassNotFoundException e){
+			System.out.println ("Wrong casting");
+		} catch (IOException e){
+			System.out.println("Error in processing file");
+		}
+	}
+	
+	private static void closeStaffInputFile(){
+		try{
+			if(staffInput != null){
+				staffInput.close();
+			}
+		} catch (IOException e){
+			System.out.println("Error in closing file");
+		}
 	}
 }
 
