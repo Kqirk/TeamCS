@@ -7,6 +7,9 @@ import javafx.stage.Stage;
 import javafx.geometry.Insets;
 import javafx.collections.*;
 import javafx.scene.control.cell.*;
+import javafx.geometry.HPos;
+import java.time.LocalDate;
+import java.util.Locale;
 
 import java.io.*;
 import java.nio.file.*;
@@ -15,13 +18,12 @@ import java.util.*;
 
 
 class Student implements Serializable{
-	//private final int id;
-	private int password; //1234
+	private String password; //1234
 	private String name; //userid Kirk 
 	ArrayList <Room> bookedRooms;
 	private final String role;
 	
-	public Student (String name, int password){
+	public Student (String name, String password){
 		bookedRooms = new ArrayList <Room>();
 		this.name = name;
 		this.password = password;
@@ -32,7 +34,7 @@ class Student implements Serializable{
 		return name;
 	}
 	
-	public int getPassword(){
+	public String getPassword(){
 		return password;
 	}
 	
@@ -42,17 +44,16 @@ class Student implements Serializable{
 }
 
 class Staff implements Serializable{
-	//private final int id;
-	private int password;
+	private String password;
 	private String name;
 	private final String role;
 	
 	public Staff (){
-		password = 0;
+		password = "";
 		name = "";
 		this.role = "Staff";
 	}
-	public Staff (String name, int password) {
+	public Staff (String name, String password) {
 		this.name = name;
 		this.password = password;
 		this.role = "Staff";
@@ -62,7 +63,7 @@ class Staff implements Serializable{
 		return name;
 	}
 	
-	public int getPassword(){
+	public String getPassword(){
 		return password;
 	}
 	
@@ -96,8 +97,8 @@ public class roomSystem extends Application {
 		readStaffFile("staffFile2.txt");
 		processStaffFile();
 		closeStaffInputFile();
-		Staff staff = new Staff ("Kirk", 1234);
-		students.add(new Student ("Study", 1234));
+		Staff staff = new Staff ("Kirk", "1234");
+		students.add(new Student ("Study", "1234"));
 		rooms.add(new Room("Deluxe", "Double", 150));
 		rooms.add(new Room("Premium", "Triple", 180));
 		rooms.add(new Room("Suite", "Double", 250));
@@ -121,7 +122,7 @@ public class roomSystem extends Application {
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
-		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners, don't ask me what's insets
+		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 		grid.setVgap(8);
 		grid.setHgap(10);
 		
@@ -148,8 +149,8 @@ public class roomSystem extends Application {
 		
 		//adding action lister
 		loginButton.setOnAction (e -> {
-			if(verifyLogin (nameInput.getText(), Integer.valueOf(passInput.getText()))){
-				if (getRole(nameInput.getText()).equals("Staff")){
+			if(verifyLogin (nameInput.getText().trim(), passInput.getText().trim())){
+				if (getRole(nameInput.getText().trim()).equals("Staff")){
 					staffLogInPage();
 				} else {
 					studentLogInPage();
@@ -177,10 +178,10 @@ public class roomSystem extends Application {
 	}
 	
 	//verify login (check if user exist and password is correct)
-	public boolean verifyLogin (String userID, int password){
+	public boolean verifyLogin (String userID, String password){
 		for (Staff s : staffs){
 			if (s.getName().equals(userID)){
-				if (s.getPassword() == password){
+				if (s.getPassword().equals(password)){
 					System.out.println("Authenticated");
 					return true;
 				}
@@ -189,7 +190,7 @@ public class roomSystem extends Application {
 		
 		for (Student s : students){
 			if (s.getName().equals(userID)){
-				if (s.getPassword() == password){
+				if (s.getPassword().equals(password)){
 					System.out.println("Authenticated");
 					return true;
 				}
@@ -224,7 +225,7 @@ public class roomSystem extends Application {
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
-		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners, don't ask me what's insets
+		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 		grid.setVgap(8);
 		grid.setHgap(10);
 		
@@ -251,8 +252,8 @@ public class roomSystem extends Application {
 		//adding action lister
 		signupButton.setOnAction (e -> {
 			
-			if (!userExists(nameInput.getText())){ //get unique id
-				signUpStaff(nameInput.getText(), Integer.valueOf(passInput.getText()));
+			if (!userExists(nameInput.getText().trim()) && nameInput.getText().trim() != "" && passInput.getText().trim()!= ""){ //get unique id
+				signUpStaff(nameInput.getText().trim(), passInput.getText().trim());
 				window.close();
 			} else {
 				System.out.println("User already exists");
@@ -323,13 +324,13 @@ public class roomSystem extends Application {
 		
 	}
 	//sign up staff
-	public void signUpStaff(String username, int password){
+	public void signUpStaff(String username, String password){
 		Staff staff = new Staff (username, password);
 		staffs.add(staff);
 	}
 	
 	//sign up students
-	public void signUpStudent(String username, int password){
+	public void signUpStudent(String username, String password){
 		Student student = new Student (username, password);
 		students.add(student);
 	}
@@ -356,10 +357,14 @@ public class roomSystem extends Application {
 		window.setTitle("(Student) You have logged in");
 		
 		Label label = new Label ("Welcome to UOW accomodations");
-		StackPane sp = new StackPane ();
+		VBox vbox = new VBox ();
 		
-		sp.getChildren().add(label);
-		Scene scene = new Scene (sp, 640, 480);
+		vbox.getChildren().add(label);
+		
+		Button bookRoom = new Button("Book Room");
+		bookRoom.setOnAction(e -> bookRoom());
+		vbox.getChildren().add(bookRoom);
+		Scene scene = new Scene (vbox, 640, 480);
 		window.setScene (scene);
 		window.show();
 	}	
@@ -372,6 +377,40 @@ public class roomSystem extends Application {
 		}
 		
 		return allRooms;
+	}
+	
+	//book room window
+	public static void bookRoom(){
+		DatePicker checkInDatePicker;
+		DatePicker checkOutDatePicker;
+		
+		//create new stage 
+		Stage window = new Stage ();
+		
+		//set title of stage
+		window.setTitle ("Book Room");
+		
+		VBox vbox = new VBox(20);
+        vbox.setStyle("-fx-padding: 10;");
+        Scene scene = new Scene(vbox, 400, 400);
+        window.setScene(scene);
+        checkInDatePicker = new DatePicker();
+        checkOutDatePicker = new DatePicker();
+        checkInDatePicker.setValue(LocalDate.now());
+        checkOutDatePicker.setValue(checkInDatePicker.getValue().plusDays(1));
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(10);
+        gridPane.setVgap(10);
+        Label checkInlabel = new Label("Check-In Date:");
+        gridPane.add(checkInlabel, 0, 0);
+        GridPane.setHalignment(checkInlabel, HPos.LEFT);
+        gridPane.add(checkInDatePicker, 0, 1);
+        Label checkOutlabel = new Label("Check-Out Date:");
+        gridPane.add(checkOutlabel, 0, 2);
+        GridPane.setHalignment(checkOutlabel, HPos.LEFT);
+        gridPane.add(checkOutDatePicker, 0, 3);
+        vbox.getChildren().add(gridPane);
+		window.show();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -395,15 +434,29 @@ public class roomSystem extends Application {
 		table.setItems(getRooms());
 		table.getColumns().addAll(priceColumn, capacityColumn,nameColumn );
 		
+		//delete button test
+		Button delete = new Button ("Delete");
+		delete.setOnAction(e-> deleteButtonClicked());
+		
 		//create layout
 		VBox vBox = new VBox();
-		vBox.getChildren().addAll(table);
+		vBox.getChildren().addAll(table, delete);
 		
 		Scene scene = new Scene (vBox);
 		window.setScene(scene);
 		window.show();
 	}
 	
+	//delete buton test
+	public static void deleteButtonClicked(){
+		ObservableList<Room> roomSelected, allRooms;
+		allRooms = table.getItems();
+		roomSelected = table.getSelectionModel().getSelectedItems();
+		
+		roomSelected.forEach(allRooms::remove);
+		rooms.forEach(e-> System.out.println(e));
+		roomSelected.forEach(rooms::remove);
+	}
 	//file processing methods
 	//create StaffFile (for closing application)
 	private static void openStaffFile (String fileName){
@@ -417,7 +470,7 @@ public class roomSystem extends Application {
 	private static void createStaffFile (){
 		try {
 			//staffOutput.writeObject (new Staff ("Kqirk", 1234));
-			staffOutput.writeObject (new Staff ("Admin", 1234));
+			staffOutput.writeObject (new Staff ("Admin", "1234"));
 			for (Staff s : staffs){
 				staffOutput.writeObject(s);
 			}

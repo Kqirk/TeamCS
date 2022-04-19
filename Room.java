@@ -1,5 +1,8 @@
 import java.io.*;
 import java.nio.file.*;
+import java.time.LocalDate;
+import java.util.Locale;
+import java.util.ArrayList;
 
 public class Room implements Serializable {
 	private boolean booked; 
@@ -8,10 +11,9 @@ public class Room implements Serializable {
 	private String capacity; //single, double, triple
 	private String name; //suite 
 	private String promo;
-	//date i have no idea 
-	// booked on
-	// avaible from 
-	// noOfNights
+	private ArrayList <LocalDate[]> availableDates;
+	private ArrayList <LocalDate[]> reservedDates;
+
 
 	public Room (String name, String capacity, double price){
 		booked = false;
@@ -20,6 +22,8 @@ public class Room implements Serializable {
 		this.capacity = capacity;
 		this.price = price;
 		this.promo = "";
+		availableDates = new ArrayList <LocalDate[]>();
+		reservedDates = new ArrayList <LocalDate[]>();
 	}
 	
 	//accessor methods
@@ -70,6 +74,13 @@ public class Room implements Serializable {
 	public void setPrice(double price){
 		this.price = price;
 	}
+	
+	//room booking logic
+	public void addDates (LocalDate[] stay){
+		availableDates.add(stay);
+	}
+	
+	
 	
 	@Override
 	public String toString (){
