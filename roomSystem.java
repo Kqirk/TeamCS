@@ -10,7 +10,7 @@ import javafx.scene.control.cell.*;
 import javafx.geometry.HPos;
 import java.time.LocalDate;
 import java.util.Locale;
-
+import javafx.util.Callback;
 import java.io.*;
 import java.nio.file.*;
 
@@ -21,13 +21,15 @@ class Student implements Serializable{
 	private String password; //1234
 	private String name; //userid Kirk 
 	ArrayList <Room> bookedRooms;
+	private ArrayList <LocalDate[]> reservedDates;
 	private final String role;
 	
 	public Student (String name, String password){
 		bookedRooms = new ArrayList <Room>();
 		this.name = name;
 		this.password = password;
-		this.role = "Student";
+		this.role = "Student"; 
+		reservedDates = new ArrayList <LocalDate[]> ();
 	}
 	
 	public String getName (){
@@ -40,6 +42,25 @@ class Student implements Serializable{
 	
 	public String getRole (){
 		return role;
+	}
+	
+	public void bookRoom (Room r){
+		bookedRooms.add(r);
+	}
+	
+	public ArrayList<Room> getBookedRooms (){
+		return bookedRooms;
+	}
+	
+	public ArrayList <LocalDate[]> getReservedDates(){
+		return reservedDates;
+	}
+	
+	public void addReservedDates(LocalDate checkIn, LocalDate checkOut){
+		LocalDate[] array = new LocalDate[2];
+		array[0] = checkIn;
+		array[1] = checkOut;
+		reservedDates.add(array);
 	}
 }
 
@@ -89,6 +110,9 @@ public class roomSystem extends Application {
 	
 	//TableView, show rooms window
 	public static TableView<Room> table;
+	
+	//current profile
+	private static Student currentStudent;
 	
 	public static void main(String[] args){
 		openStaffFile("staffFile2.txt");
@@ -153,6 +177,7 @@ public class roomSystem extends Application {
 				if (getRole(nameInput.getText().trim()).equals("Staff")){
 					staffLogInPage();
 				} else {
+					setStudentSession(nameInput.getText().trim());
 					studentLogInPage();
 				}
 			}
@@ -212,6 +237,14 @@ public class roomSystem extends Application {
 			}
 		}
 		return "Role not found";
+	}
+	
+	public void setStudentSession (String userID){
+			for (Student s : students){
+				if(s.getName().equals(userID)){
+				currentStudent = s; 
+			}
+		}
 	}
 	
 	//sign up page 
@@ -362,7 +395,7 @@ public class roomSystem extends Application {
 		vbox.getChildren().add(label);
 		
 		Button bookRoom = new Button("Book Room");
-		bookRoom.setOnAction(e -> bookRoom());
+		bookRoom.setOnAction(e -> showAvailableRooms());
 		vbox.getChildren().add(bookRoom);
 		Scene scene = new Scene (vbox, 640, 480);
 		window.setScene (scene);
@@ -370,7 +403,7 @@ public class roomSystem extends Application {
 	}	
 	
 	//view rooms window
-	public static ObservableList<Room> getRooms(){
+	public static ObservableList<Room> getAllRooms(){
 		ObservableList<Room> allRooms = FXCollections.observableArrayList();
 		for (Room r : rooms){
 			allRooms.add(r);
@@ -380,10 +413,28 @@ public class roomSystem extends Application {
 	}
 	
 	//book room window
-	public static void bookRoom(){
+	public static void bookRoom(Room r){
 		DatePicker checkInDatePicker;
 		DatePicker checkOutDatePicker;
 		
+		//block out unavailable dates
+		final Callback<DatePicker, DateCell> dayCellFactory = 
+            new Callback<DatePicker, DateCell>() {
+                @Override
+                public DateCell call(final DatePicker datePicker) {
+                    return new DateCell() {
+                        @Override
+                        public void updateItem(LocalDate item, boolean empty) {
+                            super.updateItem(item, empty);
+                           
+                            if (item.isBefore(r.getAvailableOn().plusDays(1))) {
+                                    setDisable(true);
+                                    setStyle("-fx-background-color: #ffc0cb;");
+                            }   
+                    }
+                };
+            }
+        };
 		//create new stage 
 		Stage window = new Stage ();
 		
@@ -394,23 +445,50 @@ public class roomSystem extends Application {
         vbox.setStyle("-fx-padding: 10;");
         Scene scene = new Scene(vbox, 400, 400);
         window.setScene(scene);
+		
         checkInDatePicker = new DatePicker();
         checkOutDatePicker = new DatePicker();
+		
         checkInDatePicker.setValue(LocalDate.now());
-        checkOutDatePicker.setValue(checkInDatePicker.getValue().plusDays(1));
+		checkOutDatePicker.setValue(checkInDatePicker.getValue().plusDays(1));
+		
+		checkInDatePicker.setDayCellFactory(dayCellFactory);
+		checkOutDatePicker.setDayCellFactory(dayCellFactory);
+        
         GridPane gridPane = new GridPane();
         gridPane.setHgap(10);
         gridPane.setVgap(10);
+		
         Label checkInlabel = new Label("Check-In Date:");
         gridPane.add(checkInlabel, 0, 0);
         GridPane.setHalignment(checkInlabel, HPos.LEFT);
         gridPane.add(checkInDatePicker, 0, 1);
         Label checkOutlabel = new Label("Check-Out Date:");
         gridPane.add(checkOutlabel, 0, 2);
+		
         GridPane.setHalignment(checkOutlabel, HPos.LEFT);
         gridPane.add(checkOutDatePicker, 0, 3);
         vbox.getChildren().add(gridPane);
+		
+		Label promoCode = new Label("Enter Promo Code");
+		TextField promoValue = new TextField();
+		gridPane.add(promoCode, 0, 4);
+		gridPane.add(promoValue, 1, 4);
+		
+		Button book = new Button ("Book");
+		book.setOnAction(e -> bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
+		gridPane.add(book, 0, 5);
+		
 		window.show();
+	}
+	
+	public static void bookButtonClicked(Room r, LocalDate checkIn, LocalDate checkOut){
+		currentStudent.addReservedDates(checkIn, checkOut);
+		r.addReservedDates(checkIn, checkOut);
+		
+		LocalDate[] array = r.getReservedDates().get(0);
+		System.out.printf("Booked check in: %s%nCheck out: %s%n", array[0].toString(), array[1].toString());
+		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -431,12 +509,59 @@ public class roomSystem extends Application {
 		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));		
 				
 		table = new TableView<Room>();
-		table.setItems(getRooms());
+		table.setItems(getAllRooms());
 		table.getColumns().addAll(priceColumn, capacityColumn,nameColumn );
 		
 		//delete button test
 		Button delete = new Button ("Delete");
 		delete.setOnAction(e-> deleteButtonClicked());
+		
+		//create layout
+		VBox vBox = new VBox();
+		vBox.getChildren().addAll(table, delete);
+		
+		Scene scene = new Scene (vBox);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	//view available room helper function
+	public static ObservableList<Room> getAvailableRooms(){
+		ObservableList<Room> availableRooms = FXCollections.observableArrayList();
+		for (Room r : rooms){
+			if (r.getViewable()){
+				availableRooms.add(r);
+			}
+		}
+		
+		return availableRooms;
+	}
+	
+	@SuppressWarnings("unchecked")
+	//for students to book room
+	public static void showAvailableRooms(){
+		Stage window = new Stage ();
+		window.setTitle("Show available rooms");
+		
+		TableColumn<Room, String> nameColumn = new TableColumn<Room, String>("Name");
+		nameColumn.setMinWidth(200);
+		nameColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("name"));
+		
+		TableColumn<Room, String> capacityColumn = new TableColumn<Room, String>("Capacity");
+		capacityColumn.setMinWidth(200);
+		capacityColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("capacity"));		
+		
+		TableColumn<Room, String> priceColumn = new TableColumn<Room, String>("Price");
+		priceColumn.setMinWidth(200);
+		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));		
+				
+		table = new TableView<Room>();
+		table.setItems(getAllRooms());
+		table.getColumns().addAll(priceColumn, capacityColumn,nameColumn );
+		
+		//delete button test
+		Button delete = new Button ("View Room");
+		delete.setOnAction(e-> viewButtonClicked());
 		
 		//create layout
 		VBox vBox = new VBox();
@@ -454,8 +579,59 @@ public class roomSystem extends Application {
 		roomSelected = table.getSelectionModel().getSelectedItems();
 		
 		roomSelected.forEach(allRooms::remove);
-		rooms.forEach(e-> System.out.println(e));
 		roomSelected.forEach(rooms::remove);
+	}
+	
+	//view room window
+	public static void viewButtonClicked(){
+		ObservableList<Room> availableRooms;
+		Room roomSelected;
+		
+		availableRooms = table.getItems();
+		roomSelected = table.getSelectionModel().getSelectedItem();
+		displayRoomDetails(roomSelected);
+	}
+	
+	//display room details
+	public static void displayRoomDetails(Room r){
+		Stage window = new Stage ();
+		window.setTitle("Room details");
+		
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		//labels
+		Label roomName = new Label ("Room Name: ");
+		GridPane.setConstraints(roomName, 0, 0); //first column, first row
+		Label nameDetail = new Label (r.getName());
+		GridPane.setConstraints(nameDetail, 1, 0); //second column, first row
+		
+		Label roomPrice = new Label ("Price per night: ");
+		GridPane.setConstraints(roomPrice, 0, 1); //first column, 2nd row
+		Label priceDetail = new Label ("$" + r.getPrice());
+		GridPane.setConstraints(priceDetail, 1, 1); //second column, first row
+		
+		Label roomCapacity = new Label ("Room capacity: ");
+		GridPane.setConstraints(roomCapacity, 0, 2); //first column, 3rd row
+		Label capacityDetail = new Label (r.getCapacity());
+		GridPane.setConstraints(capacityDetail, 1, 2); //second column, first row
+		
+		Label availableFrom = new Label ("Available after: ");
+		GridPane.setConstraints(availableFrom, 0, 3); //first column, 4rd row
+		Label dateValue = new Label (r.getAvailableOn().toString());
+		GridPane.setConstraints(dateValue, 1, 3); //2nd column, 4rd row
+		grid.getChildren().addAll(roomName, nameDetail, roomPrice, priceDetail, roomCapacity, capacityDetail);
+		grid.getChildren().addAll(availableFrom, dateValue);
+		
+		Button bookRoom = new Button ("Book");
+		bookRoom.setOnAction(e -> bookRoom(r));
+		GridPane.setConstraints(bookRoom, 0, 4); //1st column, 5th row
+		grid.getChildren().addAll(bookRoom);
+		Scene scene = new Scene (grid, 300, 300);
+		window.setScene(scene);
+		window.show();
 	}
 	//file processing methods
 	//create StaffFile (for closing application)

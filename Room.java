@@ -11,8 +11,10 @@ public class Room implements Serializable {
 	private String capacity; //single, double, triple
 	private String name; //suite 
 	private String promo;
-	private ArrayList <LocalDate[]> availableDates;
+	private boolean promoUsed; //check if promo is used
+	private LocalDate availableOn;
 	private ArrayList <LocalDate[]> reservedDates;
+	private String bookedBy; //booked by which username
 
 
 	public Room (String name, String capacity, double price){
@@ -22,8 +24,10 @@ public class Room implements Serializable {
 		this.capacity = capacity;
 		this.price = price;
 		this.promo = "";
-		availableDates = new ArrayList <LocalDate[]>();
+		bookedBy = "";
+		promoUsed = false; 
 		reservedDates = new ArrayList <LocalDate[]>();
+		availableOn = LocalDate.now();
 	}
 	
 	//accessor methods
@@ -75,12 +79,24 @@ public class Room implements Serializable {
 		this.price = price;
 	}
 	
-	//room booking logic
-	public void addDates (LocalDate[] stay){
-		availableDates.add(stay);
+	public LocalDate getAvailableOn (){
+		return availableOn;
 	}
 	
+	public void setAvailableOn (LocalDate availableOn){
+		this.availableOn = availableOn;
+	}
 	
+	public ArrayList <LocalDate[]> getReservedDates(){
+		return reservedDates;
+	}
+	
+	public void addReservedDates(LocalDate checkIn, LocalDate checkOut){
+		LocalDate[] array = new LocalDate[2];
+		array[0] = checkIn;
+		array[1] = checkOut;
+		reservedDates.add(array);
+	}
 	
 	@Override
 	public String toString (){
