@@ -20,16 +20,14 @@ import java.util.*;
 class Student implements Serializable{
 	private String password; //1234
 	private String name; //userid Kirk 
-	ArrayList <Room> bookedRooms;
-	private ArrayList <LocalDate[]> reservedDates;
+	private ArrayList <Booking> bookings;
 	private final String role;
 	
 	public Student (String name, String password){
-		bookedRooms = new ArrayList <Room>();
 		this.name = name;
 		this.password = password;
 		this.role = "Student"; 
-		reservedDates = new ArrayList <LocalDate[]> ();
+		bookings = new ArrayList <Booking> ();
 	}
 	
 	public String getName (){
@@ -44,23 +42,12 @@ class Student implements Serializable{
 		return role;
 	}
 	
-	public void bookRoom (Room r){
-		bookedRooms.add(r);
+	public ArrayList<Booking> getBookings (){
+		return bookings;
 	}
 	
-	public ArrayList<Room> getBookedRooms (){
-		return bookedRooms;
-	}
-	
-	public ArrayList <LocalDate[]> getReservedDates(){
-		return reservedDates;
-	}
-	
-	public void addReservedDates(LocalDate checkIn, LocalDate checkOut){
-		LocalDate[] array = new LocalDate[2];
-		array[0] = checkIn;
-		array[1] = checkOut;
-		reservedDates.add(array);
+	public void addBookings(Booking b){
+		bookings.add(b);
 	}
 }
 
@@ -93,6 +80,53 @@ class Staff implements Serializable{
 	}
 }
 
+class Booking implements Serializable{
+	private Student student;
+	private Room r;
+	private LocalDate checkInDate;
+	private LocalDate checkOutDate; 
+	
+	public Booking (Student student, Room r, LocalDate checkInDate, LocalDate checkOutDate){
+		this.student = student;
+		this.r = r;
+		this.checkInDate = checkInDate;
+		this.checkOutDate = checkOutDate; 
+	}
+	
+	public Student getStudent(){
+		return student;
+	}
+	
+	public void setStudent (Student student){
+		this.student = student;
+	}
+	
+	public Room getRoom (){
+		return r;
+	}
+	
+	public void setRoom(Room r){
+		this.r = r;
+	}
+	
+	public LocalDate getCheckInDate(){
+		return checkInDate;
+	}
+	
+	public LocalDate getCheckOutDate(){
+		return checkOutDate;
+	}
+	
+	public void setCheckInDate(LocalDate checkInDate){
+		this.checkInDate = checkInDate;
+	}
+	
+	public void setCheckOutDate(LocalDate checkOutDate){
+		this.checkOutDate = checkOutDate; 
+	}
+	
+}
+
 public class roomSystem extends Application {
 	//arraylist for staff,student and room
 	public static ArrayList <Staff> staffs = new ArrayList <Staff>(); 
@@ -115,9 +149,9 @@ public class roomSystem extends Application {
 	private static Student currentStudent;
 	
 	public static void main(String[] args){
-		openStaffFile("staffFile2.txt");
-		createStaffFile();
-		closeStaffFile();
+		//openStaffFile("staffFile2.txt");
+		//createStaffFile();
+		//closeStaffFile();
 		readStaffFile("staffFile2.txt");
 		processStaffFile();
 		closeStaffInputFile();
@@ -126,6 +160,9 @@ public class roomSystem extends Application {
 		rooms.add(new Room("Deluxe", "Double", 150));
 		rooms.add(new Room("Premium", "Triple", 180));
 		rooms.add(new Room("Suite", "Double", 250));
+		Room r = new Room("Viewable", "Double", 300);
+		r.setViewable(true);
+		rooms.add(r);
 		staffs.add(staff);
 
         launch(args);
@@ -249,7 +286,7 @@ public class roomSystem extends Application {
 	
 	//sign up page 
 	//maybe add re-enter password and logic?
-	public void signUpPage (){
+	public void staffSignUpPage (){
 		//create new stage 
 		Stage window = new Stage ();
 		
@@ -290,6 +327,60 @@ public class roomSystem extends Application {
 				window.close();
 			} else {
 				System.out.println("User already exists");
+			}
+		});
+		
+		GridPane.setConstraints(signupButton, 1, 2); //first column, third row
+		
+		//add button 
+		grid.getChildren().add(signupButton);
+		Scene scene = new Scene (grid, 300, 200);
+		window.setScene (scene);
+		window.show();
+	}
+	
+	//student sign up page
+	public void studentSignUpPage(){
+		//create new stage 
+		Stage window = new Stage ();
+		
+		//set title of stage
+		window.setTitle ("Student Signup Page");
+		
+		//create GridPane layout 
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		//labels
+		Label nameLabel = new Label ("Username");
+		GridPane.setConstraints(nameLabel, 0, 0); //first column, first row
+		
+		Label passLabel = new Label ("Password");
+		GridPane.setConstraints(passLabel, 0, 1); //first column, second row
+		
+		//textfields
+		TextField nameInput = new TextField ();
+		GridPane.setConstraints(nameInput, 1, 0); //second column, first row
+		
+		TextField passInput = new TextField ();
+		GridPane.setConstraints(passInput, 1, 1);
+		
+		//add nodes to layout
+		grid.getChildren().addAll(nameLabel, nameInput, passLabel, passInput);
+		
+		//add login button
+		Button signupButton = new Button ("Signup");
+		
+		//adding action lister
+		signupButton.setOnAction (e -> {
+			
+			if (!userExists(nameInput.getText().trim()) && nameInput.getText().trim() != "" && passInput.getText().trim()!= ""){ //get unique id
+				signUpStudent(nameInput.getText().trim(), passInput.getText().trim());
+				window.close();
+			} else {
+				System.out.println("Username already exists");
 			}
 		});
 		
@@ -347,7 +438,12 @@ public class roomSystem extends Application {
 		
 		//add action listeners
 		staff.setOnAction (e -> {
-			signUpPage();
+			staffSignUpPage();
+			window.close();
+		});
+		
+		student.setOnAction(e ->{
+			studentSignUpPage();
 			window.close();
 		});
 		
@@ -372,17 +468,78 @@ public class roomSystem extends Application {
 		Stage window = new Stage ();
 		window.setTitle("(Staff) You have logged in");
 		
-		Label label = new Label ("Welcome to UOW accomodations");
-		StackPane sp = new StackPane ();
+		//Label label = new Label ("Welcome to UOW accomodations");
+		GridPane grid = new GridPane();
 		
-		sp.getChildren().add(label);
+		//grid.getChildren().add(label);
 		
 		Button b = new Button ("Show all rooms");
 		b.setOnAction(e -> showAllRooms());
-		sp.getChildren().add(b);
-		Scene scene = new Scene (sp, 640, 480);
+		grid.getChildren().add(b);
+		
+		Button createRoom = new Button ("Create Room");
+		createRoom.setOnAction(e -> createRoom());
+		grid.add(createRoom, 0, 1);
+		Scene scene = new Scene (grid, 640, 480);
 		window.setScene (scene);
 		window.show();
+	}
+	
+	//Staff window to create room
+	public void createRoom (){
+		Stage window = new Stage ();
+		window.setTitle("Create new room");
+		
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+        grid.setVgap(10);
+		
+		
+		Label roomName = new Label ("Room Name:");
+		TextField nameInput = new TextField();
+		grid.add(roomName, 0, 0);
+		grid.add(nameInput, 1, 0);
+		
+		Label roomPrice = new Label ("Room Price: ");
+		TextField priceInput = new TextField();
+		grid.add(roomPrice, 0, 1);
+		grid.add(priceInput, 1, 1);
+		
+		Label capacity = new Label ("Room Capacity:");
+		TextField capInput = new TextField();
+		grid.add(capacity, 0, 2);
+		grid.add(capInput, 1, 2);
+		
+		Label promoCode = new Label ("Promo Code:");
+		TextField promoInput = new TextField();
+		grid.add(promoCode, 0, 3);
+		grid.add(promoInput, 1, 3);
+		
+		Label availFrom = new Label("Available From:");
+		DatePicker dateInput = new DatePicker();
+		grid.add(availFrom, 0, 4);
+		grid.add(dateInput, 1, 4);
+		
+		Label viewable = new Label("Viewable:");
+		TextField viewInput = new TextField();
+		viewInput.setPromptText(" 'yes' or 'no'");
+		grid.add(viewable, 0, 5);
+		grid.add(viewInput, 1, 5);
+		
+		Button createRoom = new Button ("Create");
+		createRoom.setOnAction(e->{
+			Room r = new Room(nameInput.getText(), capInput.getText(), Double.valueOf(priceInput.getText()),
+					promoInput.getText().trim(), dateInput.getValue(), viewInput.getText().trim().toUpperCase().equals("YES")? true : false);
+			rooms.add(r);
+			System.out.println(r.getViewable());
+			window.close();
+		});
+		grid.add(createRoom, 0, 6);
+		
+		Scene scene = new Scene (grid, 300, 300);
+		window.setScene(scene);
+		window.show();
+		
 	}
 	
 	public void studentLogInPage(){
@@ -397,11 +554,24 @@ public class roomSystem extends Application {
 		Button bookRoom = new Button("Book Room");
 		bookRoom.setOnAction(e -> showAvailableRooms());
 		vbox.getChildren().add(bookRoom);
+		Button showRooms = new Button("Show reservations");
+		showRooms.setOnAction (e -> viewReservations());
+		vbox.getChildren().add(showRooms);
 		Scene scene = new Scene (vbox, 640, 480);
 		window.setScene (scene);
 		window.show();
 	}	
 	
+	//student to view his own reservations
+	public void viewReservations(){
+		ArrayList<Booking> bookings = new ArrayList<>();
+		bookings = currentStudent.getBookings();
+		
+		for (Booking b : bookings){
+			System.out.printf("Room name: %s%nRoom price: %.2f%nCheck In: %s%nCheck Out: %s%n", b.getRoom().getName(), 
+							b.getRoom().getPrice(), b.getCheckInDate().toString(), b.getCheckOutDate().toString());
+		}
+	}
 	//view rooms window
 	public static ObservableList<Room> getAllRooms(){
 		ObservableList<Room> allRooms = FXCollections.observableArrayList();
@@ -431,6 +601,13 @@ public class roomSystem extends Application {
                                     setDisable(true);
                                     setStyle("-fx-background-color: #ffc0cb;");
                             }   
+							
+							for (LocalDate[] array : r.getReservedDates()){
+								if (item.isBefore(array[1].plusDays(1)) && item.isAfter(array[0].minusDays(1))){
+									setDisable(true);
+                                    setStyle("-fx-background-color: #ffc0cb;");
+								}
+							}
                     }
                 };
             }
@@ -483,11 +660,11 @@ public class roomSystem extends Application {
 	}
 	
 	public static void bookButtonClicked(Room r, LocalDate checkIn, LocalDate checkOut){
-		currentStudent.addReservedDates(checkIn, checkOut);
 		r.addReservedDates(checkIn, checkOut);
-		
-		LocalDate[] array = r.getReservedDates().get(0);
-		System.out.printf("Booked check in: %s%nCheck out: %s%n", array[0].toString(), array[1].toString());
+		Booking b = new Booking (currentStudent, r, checkIn, checkOut);
+		currentStudent.addBookings(b);
+		//LocalDate[] array = r.getReservedDates().get(0);
+		//System.out.printf("Booked check in: %s%nCheck out: %s%n", array[0].toString(), array[1].toString());
 		
 	}
 	
@@ -556,7 +733,7 @@ public class roomSystem extends Application {
 		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));		
 				
 		table = new TableView<Room>();
-		table.setItems(getAllRooms());
+		table.setItems(getAvailableRooms());
 		table.getColumns().addAll(priceColumn, capacityColumn,nameColumn );
 		
 		//delete button test
@@ -574,12 +751,14 @@ public class roomSystem extends Application {
 	
 	//delete buton test
 	public static void deleteButtonClicked(){
-		ObservableList<Room> roomSelected, allRooms;
-		allRooms = table.getItems();
-		roomSelected = table.getSelectionModel().getSelectedItems();
+		ObservableList<Room>  allRooms;
+		Room roomSelected; 
 		
-		roomSelected.forEach(allRooms::remove);
-		roomSelected.forEach(rooms::remove);
+		allRooms = table.getItems();
+		roomSelected = table.getSelectionModel().getSelectedItem();
+		
+		allRooms.remove(roomSelected);
+		rooms.remove(roomSelected);
 	}
 	
 	//view room window

@@ -5,7 +5,6 @@ import java.util.Locale;
 import java.util.ArrayList;
 
 public class Room implements Serializable {
-	private boolean booked; 
 	private boolean viewable; //staff will make this viewable
 	private double price; //per night (fixed)
 	private String capacity; //single, double, triple
@@ -14,31 +13,29 @@ public class Room implements Serializable {
 	private boolean promoUsed; //check if promo is used
 	private LocalDate availableOn;
 	private ArrayList <LocalDate[]> reservedDates;
-	private String bookedBy; //booked by which username
-
 
 	public Room (String name, String capacity, double price){
-		booked = false;
 		viewable = false; 
 		this.name = name; 
 		this.capacity = capacity;
 		this.price = price;
 		this.promo = "";
-		bookedBy = "";
 		promoUsed = false; 
 		reservedDates = new ArrayList <LocalDate[]>();
 		availableOn = LocalDate.now();
 	}
 	
+	public Room (String name, String capacity, double price, String promo, LocalDate availableOn, boolean viewable){
+		this.name = name; 
+		this.capacity = capacity;
+		this.price = price;
+		this.promo = promo;
+		this.availableOn = availableOn;
+		this.viewable = viewable;
+		reservedDates = new ArrayList <LocalDate[]>();
+	}
+	
 	//accessor methods
-	public boolean getBooked(){
-		return booked;
-	}
-	
-	public void setBooked(boolean booked){
-		this.booked = booked;
-	}
-	
 	public boolean getViewable(){
 		return viewable;
 	}
