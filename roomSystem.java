@@ -82,13 +82,15 @@ class Staff implements Serializable{
 
 class Booking implements Serializable{
 	private Student student;
-	private Room r;
+	private Room room;
+	private String roomName; 
 	private LocalDate checkInDate;
 	private LocalDate checkOutDate; 
 	
-	public Booking (Student student, Room r, LocalDate checkInDate, LocalDate checkOutDate){
+	public Booking (Student student, Room room, LocalDate checkInDate, LocalDate checkOutDate){
 		this.student = student;
-		this.r = r;
+		this.room = room;
+		this.roomName = room.getName();
 		this.checkInDate = checkInDate;
 		this.checkOutDate = checkOutDate; 
 	}
@@ -102,11 +104,19 @@ class Booking implements Serializable{
 	}
 	
 	public Room getRoom (){
-		return r;
+		return room;
 	}
 	
-	public void setRoom(Room r){
-		this.r = r;
+	public void setRoom(Room room){
+		this.room = room;
+	}
+	
+	public String getRoomName(){
+		return roomName;
+	}
+	
+	public void setRoomName(String roomName){
+		this.roomName = roomName;
 	}
 	
 	public LocalDate getCheckInDate(){
@@ -144,6 +154,7 @@ public class roomSystem extends Application {
 	
 	//TableView, show rooms window
 	public static TableView<Room> table;
+	public static TableView<Booking> bTable;
 	
 	//current profile
 	private static Student currentStudent;
@@ -480,6 +491,7 @@ public class roomSystem extends Application {
 		Button createRoom = new Button ("Create Room");
 		createRoom.setOnAction(e -> createRoom());
 		grid.add(createRoom, 0, 1);
+	
 		Scene scene = new Scene (grid, 640, 480);
 		window.setScene (scene);
 		window.show();
@@ -528,7 +540,7 @@ public class roomSystem extends Application {
 		
 		Button createRoom = new Button ("Create");
 		createRoom.setOnAction(e->{
-			Room r = new Room(nameInput.getText(), capInput.getText(), Double.valueOf(priceInput.getText()),
+			Room r = new Room(nameInput.getText(), capInput.getText(), Double.valueOf(priceInput.getText().trim()),
 					promoInput.getText().trim(), dateInput.getValue(), viewInput.getText().trim().toUpperCase().equals("YES")? true : false);
 			rooms.add(r);
 			System.out.println(r.getViewable());
@@ -542,6 +554,60 @@ public class roomSystem extends Application {
 		
 	}
 	
+	
+	//Staff room modification details
+	public static void modifyButtonClicked(){
+		ObservableList<Room> availableRooms;
+		Room roomSelected;
+		
+		availableRooms = table.getItems();
+		roomSelected = table.getSelectionModel().getSelectedItem();
+		modifyRoomDetails(roomSelected);
+	}
+	
+	public static void modifyRoomDetails(Room r){
+		Stage window = new Stage ();
+		window.setTitle("Modify Room Details");
+		
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		//labels
+		Label roomName = new Label ("Room Name: ");
+		GridPane.setConstraints(roomName, 0, 0); //first column, first row
+		Label nameDetail = new Label (r.getName());
+		GridPane.setConstraints(nameDetail, 1, 0); //second column, first row
+		TextField newName = new TextField();
+		newName.setPromptText("Enter new name");
+		GridPane.setConstraints(newName, 2, 0);
+		
+		Label roomPrice = new Label ("Price per night: ");
+		GridPane.setConstraints(roomPrice, 0, 1); //first column, 2nd row
+		Label priceDetail = new Label ("$" + r.getPrice());
+		GridPane.setConstraints(priceDetail, 1, 1); //second column, first row
+		
+		Label roomCapacity = new Label ("Room capacity: ");
+		GridPane.setConstraints(roomCapacity, 0, 2); //first column, 3rd row
+		Label capacityDetail = new Label (r.getCapacity());
+		GridPane.setConstraints(capacityDetail, 1, 2); //second column, first row
+		
+		Label availableFrom = new Label ("Available after: ");
+		GridPane.setConstraints(availableFrom, 0, 3); //first column, 4rd row
+		Label dateValue = new Label (r.getAvailableOn().toString());
+		GridPane.setConstraints(dateValue, 1, 3); //2nd column, 4rd row
+		grid.getChildren().addAll(roomName, nameDetail, roomPrice, priceDetail, roomCapacity, capacityDetail);
+		grid.getChildren().addAll(availableFrom, dateValue, newName);
+		
+		Button bookRoom = new Button ("Book");
+		bookRoom.setOnAction(e -> bookRoom(r));
+		GridPane.setConstraints(bookRoom, 0, 4); //1st column, 5th row
+		grid.getChildren().addAll(bookRoom);
+		Scene scene = new Scene (grid, 300, 300);
+		window.setScene(scene);
+		window.show();
+	}
 	public void studentLogInPage(){
 		Stage window = new Stage ();
 		window.setTitle("(Student) You have logged in");
@@ -555,7 +621,7 @@ public class roomSystem extends Application {
 		bookRoom.setOnAction(e -> showAvailableRooms());
 		vbox.getChildren().add(bookRoom);
 		Button showRooms = new Button("Show reservations");
-		showRooms.setOnAction (e -> viewReservations());
+		showRooms.setOnAction (e -> showBookedRooms());
 		vbox.getChildren().add(showRooms);
 		Scene scene = new Scene (vbox, 640, 480);
 		window.setScene (scene);
@@ -563,14 +629,42 @@ public class roomSystem extends Application {
 	}	
 	
 	//student to view his own reservations
-	public void viewReservations(){
+	@SuppressWarnings("unchecked")
+	public void showBookedRooms(){
+		Stage window = new Stage ();
+		window.setTitle("Show booked rooms");
+		
+		Label name = new Label(currentStudent.getBookings().get(0).getRoom().getName());
+		
+		//delete button 
+		Button delete = new Button ("Delete");
+		delete.setOnAction(e-> deleteButtonClicked());
+		
+		//modify button
+		Button modify = new Button ("Modify");
+		modify.setOnAction(e -> modifyButtonClicked());
+		
+		//create layout
+		HBox hBox = new HBox();
+		hBox.getChildren().addAll(name);
+		
+		Scene scene = new Scene (hBox);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	public ObservableList<Booking> getReservations(){
+		ObservableList<Booking> bookedRooms = FXCollections.observableArrayList();
 		ArrayList<Booking> bookings = new ArrayList<>();
 		bookings = currentStudent.getBookings();
 		
 		for (Booking b : bookings){
-			System.out.printf("Room name: %s%nRoom price: %.2f%nCheck In: %s%nCheck Out: %s%n", b.getRoom().getName(), 
-							b.getRoom().getPrice(), b.getCheckInDate().toString(), b.getCheckOutDate().toString());
+			//System.out.printf("Room name: %s%nRoom price: %.2f%nCheck In: %s%nCheck Out: %s%n", b.getRoom().getName(), 
+						//	b.getRoom().getPrice(), b.getCheckInDate().toString(), b.getCheckOutDate().toString());
+			bookedRooms.add(b);		
 		}
+		
+		return bookedRooms;
 	}
 	//view rooms window
 	public static ObservableList<Room> getAllRooms(){
@@ -683,19 +777,31 @@ public class roomSystem extends Application {
 		
 		TableColumn<Room, String> priceColumn = new TableColumn<Room, String>("Price");
 		priceColumn.setMinWidth(200);
-		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));		
+		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));
+		
+		TableColumn<Room, String> dateColumn = new TableColumn<Room, String>("Available After");
+		dateColumn.setMinWidth(200);
+		dateColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("availableOn"));	
+		
+		TableColumn<Room, String> viewableColumn = new TableColumn <Room, String>("Viewable");
+		viewableColumn.setMinWidth(200);
+		viewableColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("viewable"));	
 				
 		table = new TableView<Room>();
 		table.setItems(getAllRooms());
-		table.getColumns().addAll(priceColumn, capacityColumn,nameColumn );
+		table.getColumns().addAll(nameColumn, priceColumn, capacityColumn, dateColumn, viewableColumn);
 		
-		//delete button test
+		//delete button 
 		Button delete = new Button ("Delete");
 		delete.setOnAction(e-> deleteButtonClicked());
 		
+		//modify button
+		Button modify = new Button ("Modify");
+		modify.setOnAction(e -> modifyButtonClicked());
+		
 		//create layout
 		VBox vBox = new VBox();
-		vBox.getChildren().addAll(table, delete);
+		vBox.getChildren().addAll(table, delete, modify);
 		
 		Scene scene = new Scene (vBox);
 		window.setScene(scene);
@@ -730,11 +836,15 @@ public class roomSystem extends Application {
 		
 		TableColumn<Room, String> priceColumn = new TableColumn<Room, String>("Price");
 		priceColumn.setMinWidth(200);
-		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));		
+		priceColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("price"));	
+
+		TableColumn<Room, String> dateColumn = new TableColumn<Room, String>("Available After");
+		dateColumn.setMinWidth(200);
+		dateColumn.setCellValueFactory(new PropertyValueFactory<Room, String>("availableOn"));	
 				
 		table = new TableView<Room>();
 		table.setItems(getAvailableRooms());
-		table.getColumns().addAll(priceColumn, capacityColumn,nameColumn );
+		table.getColumns().addAll(nameColumn, priceColumn, capacityColumn, dateColumn);
 		
 		//delete button test
 		Button delete = new Button ("View Room");
@@ -812,6 +922,7 @@ public class roomSystem extends Application {
 		window.setScene(scene);
 		window.show();
 	}
+	
 	//file processing methods
 	//create StaffFile (for closing application)
 	private static void openStaffFile (String fileName){
