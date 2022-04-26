@@ -159,6 +159,9 @@ public class roomSystem extends Application {
 	//current profile
 	private static Student currentStudent;
 	
+	//test variable for show reservation
+	public static int counter;
+	
 	public static void main(String[] args){
 		//openStaffFile("staffFile2.txt");
 		//createStaffFile();
@@ -600,10 +603,6 @@ public class roomSystem extends Application {
 		grid.getChildren().addAll(roomName, nameDetail, roomPrice, priceDetail, roomCapacity, capacityDetail);
 		grid.getChildren().addAll(availableFrom, dateValue, newName);
 		
-		Button bookRoom = new Button ("Book");
-		bookRoom.setOnAction(e -> bookRoom(r));
-		GridPane.setConstraints(bookRoom, 0, 4); //1st column, 5th row
-		grid.getChildren().addAll(bookRoom);
 		Scene scene = new Scene (grid, 300, 300);
 		window.setScene(scene);
 		window.show();
@@ -631,10 +630,26 @@ public class roomSystem extends Application {
 	//student to view his own reservations
 	@SuppressWarnings("unchecked")
 	public void showBookedRooms(){
+		//counter for resrvations
+		counter = 0;
+		final int max = currentStudent.getBookings().size() - 1;
+		
 		Stage window = new Stage ();
 		window.setTitle("Show booked rooms");
 		
-		Label name = new Label(currentStudent.getBookings().get(0).getRoom().getName());
+		Label reservationNo = new Label ("Reservation " + String.valueOf(counter + 1));
+		
+		Label name = new Label ("Name: ");
+		Label nameValue = new Label(currentStudent.getBookings().get(counter).getRoom().getName());
+		
+		Label price = new Label ("Price: ");
+		Label priceValue = new Label(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
+		
+		Label checkInDate = new Label("Check in: ");
+		Label checkInValue = new Label(currentStudent.getBookings().get(counter).getCheckInDate().toString());
+		
+		Label checkOutDate = new Label("Check out: ");
+		Label checkOutValue = new Label(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
 		
 		//delete button 
 		Button delete = new Button ("Delete");
@@ -642,13 +657,153 @@ public class roomSystem extends Application {
 		
 		//modify button
 		Button modify = new Button ("Modify");
-		modify.setOnAction(e -> modifyButtonClicked());
+		modify.setOnAction(e -> studentModifyButtonClicked(currentStudent.getBookings().get(counter)));
+		
+		//next reservation button
+		Button next = new Button ("Next");
+		next.setOnAction(e -> {
+			if (counter != max){
+				reservationNo.setText("Reservation " + String.valueOf(++counter + 1));
+				nameValue.setText(currentStudent.getBookings().get(counter).getRoom().getName());
+				priceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
+				checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
+				checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+			}
+		});
+		
+		//previous reservation button
+		Button previous = new Button ("Previous");
+		previous.setOnAction(e -> {
+			if (counter != 0){
+				reservationNo.setText("Reservation " + String.valueOf(--counter + 1));
+				nameValue.setText(currentStudent.getBookings().get(counter).getRoom().getName());
+				priceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
+				checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
+				checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+			}
+		});
 		
 		//create layout
-		HBox hBox = new HBox();
-		hBox.getChildren().addAll(name);
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10));
+		grid.setVgap(8);
+		grid.setHgap(10);
 		
-		Scene scene = new Scene (hBox);
+		//add components to layout
+		grid.add(reservationNo, 0, 0);
+		grid.add(name, 0, 1);
+		grid.add(nameValue, 1, 1);
+		grid.add(price, 0, 2);
+		grid.add(priceValue, 1, 2);
+		grid.add(checkInDate, 0, 3);
+		grid.add(checkInValue, 1, 3);
+		grid.add(checkOutDate, 0, 4);
+		grid.add(checkOutValue, 1, 4);
+		grid.add(previous, 0, 5);
+		grid.add(next, 1, 5);
+		grid.add(modify, 0, 6);
+		
+		Scene scene = new Scene (grid);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	//student modify function
+	public void studentModifyButtonClicked(Booking b){
+		final Callback<DatePicker, DateCell> dayCellFactory = 
+            new Callback<DatePicker, DateCell>() {
+                @Override
+                public DateCell call(final DatePicker datePicker) {
+                    return new DateCell() {
+                        @Override
+                        public void updateItem(LocalDate item, boolean empty) {
+                            super.updateItem(item, empty);
+                           
+                            if (item.isBefore(b.getRoom().getAvailableOn())) {
+                                    setDisable(true);
+                                    setStyle("-fx-background-color: #ffc0cb;");
+                            }   
+							
+							for (LocalDate[] array : b.getRoom().getReservedDates()){
+								if (item.isBefore(array[1].plusDays(1)) && item.isAfter(array[0].minusDays(1))){
+									setDisable(true);
+                                    setStyle("-fx-background-color: #ffc0cb;");
+								}
+							}
+                    }
+                };
+            }
+        };
+		Stage window = new Stage ();
+		window.setTitle("Student Modify Room Details");
+		
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		Label name = new Label ("Name: ");
+		Label nameInput = new Label (b.getRoom().getName());
+		
+		Label checkIn = new Label ("Check in date: ");
+		Label checkInValue = new Label(b.getCheckInDate().toString());
+		Label newCheckIn = new Label ("New Check In Date: ");
+		DatePicker newCheckInValue = new DatePicker();
+		newCheckInValue.setDayCellFactory(dayCellFactory);
+		
+		Label checkOut = new Label ("Check out date: ");
+		Label checkOutValue = new Label(b.getCheckOutDate().toString());
+		Label newCheckOut = new Label ("New Check Out Date: ");
+		DatePicker newCheckOutValue = new DatePicker();
+		newCheckOutValue.setDayCellFactory(dayCellFactory);
+		Label prompt = new Label ("");
+		
+		grid.add(name, 0, 0);
+		grid.add(nameInput, 1, 0);
+		grid.add(checkIn, 0, 1);
+		grid.add(checkInValue, 1, 1);
+		grid.add(newCheckIn, 0, 2);
+		grid.add(newCheckInValue, 1, 2);
+		grid.add(checkOut, 0, 3);
+		grid.add(checkOutValue, 1, 3);
+		grid.add(newCheckOut, 0, 4);
+		grid.add(newCheckOutValue, 1, 4);
+		grid.add(prompt, 0, 5);
+		
+		Button confirm = new Button ("Confirm");
+		confirm.setOnAction(e -> {
+			if (newCheckOutValue.getValue().isBefore(newCheckInValue.getValue())){
+				prompt.setText("Check out cannot be before check in");
+			} else {
+				LocalDate[] newDates = new LocalDate[2];
+				LocalDate[] oldDates = new LocalDate[2];
+				//input values to array 
+				//new dates
+				newDates[0] = newCheckInValue.getValue();
+				newDates[1] = newCheckOutValue.getValue();
+				//old dates
+				oldDates[0] = b.getCheckInDate();
+				oldDates[1] =  b.getCheckOutDate();
+				System.out.println(oldDates[0] + " " + oldDates[1]);
+				
+				//delete old dates from Room arraylist
+				b.getRoom().removeReservedDates(oldDates);
+				
+				//add new dates to Room reserved dates
+				b.getRoom().getReservedDates().add(newDates);
+				for (LocalDate[] a : b.getRoom().getReservedDates()){
+					System.out.println(a[0] + " " + a[1]);
+				}
+				
+				//edit booking
+				b.setCheckInDate(newCheckInValue.getValue());
+				b.setCheckOutDate(newCheckOutValue.getValue());
+				
+				
+			}
+		});
+		grid.add(confirm, 0, 6);
+		Scene scene = new Scene (grid, 300, 300);
 		window.setScene(scene);
 		window.show();
 	}
@@ -697,7 +852,7 @@ public class roomSystem extends Application {
                             }   
 							
 							for (LocalDate[] array : r.getReservedDates()){
-								if (item.isBefore(array[1].plusDays(1)) && item.isAfter(array[0].minusDays(1))){
+								if (item.isBefore(array[1]) && item.isAfter(array[0].minusDays(1))){
 									setDisable(true);
                                     setStyle("-fx-background-color: #ffc0cb;");
 								}
@@ -747,10 +902,26 @@ public class roomSystem extends Application {
 		gridPane.add(promoValue, 1, 4);
 		
 		Button book = new Button ("Book");
-		book.setOnAction(e -> bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
+		book.setOnAction(e -> {
+			bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue());
+			System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
+		});
 		gridPane.add(book, 0, 5);
 		
 		window.show();
+	}
+	
+	public static boolean validStay (ArrayList<LocalDate[]> dates, LocalDate checkIn, LocalDate checkOut){
+		boolean valid = true;
+		
+		for (LocalDate date = checkIn; date.isBefore(checkOut); date = date.plusDays(1)){
+			for(LocalDate[] a : dates){
+				if ((date.isBefore(a[1]) && date.isAfter(a[0]))){
+					valid = false; 
+				}
+			}
+		}
+		return valid;
 	}
 	
 	public static void bookButtonClicked(Room r, LocalDate checkIn, LocalDate checkOut){

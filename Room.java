@@ -88,6 +88,15 @@ public class Room implements Serializable {
 		return reservedDates;
 	}
 	
+	public void removeReservedDates(LocalDate[] dates){
+		for (int i = 0; i < reservedDates.size(); i++){
+			if(reservedDates.get(i)[0].compareTo(dates[0]) == 0){
+				reservedDates.remove(reservedDates.get(i));
+			}
+		}
+		
+	}
+	
 	public void addReservedDates(LocalDate checkIn, LocalDate checkOut){
 		LocalDate[] array = new LocalDate[2];
 		array[0] = checkIn;
