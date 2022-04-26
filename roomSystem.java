@@ -13,7 +13,7 @@ import java.util.Locale;
 import javafx.util.Callback;
 import java.io.*;
 import java.nio.file.*;
-
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 
@@ -651,6 +651,11 @@ public class roomSystem extends Application {
 		Label checkOutDate = new Label("Check out: ");
 		Label checkOutValue = new Label(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
 		
+		Label totalPrice =  new Label ("Total price: "); 
+		Label tPriceValue = new Label (String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice() * (int)currentStudent.getBookings().get(counter).getCheckInDate()
+								.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
+								
+								
 		//delete button 
 		Button delete = new Button ("Delete");
 		delete.setOnAction(e-> deleteButtonClicked());
@@ -668,6 +673,8 @@ public class roomSystem extends Application {
 				priceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
 				checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
 				checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+				tPriceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice() * (int)currentStudent.getBookings().get(counter).getCheckInDate()
+								.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
 			}
 		});
 		
@@ -680,6 +687,8 @@ public class roomSystem extends Application {
 				priceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
 				checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
 				checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+				tPriceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice() * (int)currentStudent.getBookings().get(counter).getCheckInDate()
+								.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
 			}
 		});
 		
@@ -702,6 +711,8 @@ public class roomSystem extends Application {
 		grid.add(previous, 0, 5);
 		grid.add(next, 1, 5);
 		grid.add(modify, 0, 6);
+		grid.add(totalPrice, 0, 7);
+		grid.add(tPriceValue, 1, 7);
 		
 		Scene scene = new Scene (grid);
 		window.setScene(scene);
@@ -757,7 +768,7 @@ public class roomSystem extends Application {
 		DatePicker newCheckOutValue = new DatePicker();
 		newCheckOutValue.setDayCellFactory(dayCellFactory);
 		Label prompt = new Label ("");
-		
+	
 		grid.add(name, 0, 0);
 		grid.add(nameInput, 1, 0);
 		grid.add(checkIn, 0, 1);
@@ -901,10 +912,23 @@ public class roomSystem extends Application {
 		gridPane.add(promoCode, 0, 4);
 		gridPane.add(promoValue, 1, 4);
 		
+		Label prompt = new Label ("");
+		gridPane.add(prompt, 0, 6);
 		Button book = new Button ("Book");
 		book.setOnAction(e -> {
-			bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue());
-			System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
+			if (promoValue.getText().trim().equals("")){
+				bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue());
+				System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
+				window.close();
+			} else if (!r.getPromo().equals(promoValue.getText().trim())){
+				prompt.setText("Promo Code Is Incorrect");
+			} else if (r.getPromo().equals(promoValue.getText().trim())){
+				bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue());
+				r.setPromoUsed(true);
+				r.setPrice(r.getPrice() * 0.8);
+				System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
+				window.close();
+			}
 		});
 		gridPane.add(book, 0, 5);
 		
@@ -917,7 +941,7 @@ public class roomSystem extends Application {
 		for (LocalDate date = checkIn; date.isBefore(checkOut); date = date.plusDays(1)){
 			for(LocalDate[] a : dates){
 				if ((date.isBefore(a[1]) && date.isAfter(a[0]))){
-					valid = false; 
+					return false;
 				}
 			}
 		}

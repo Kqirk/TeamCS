@@ -84,6 +84,14 @@ public class Room implements Serializable {
 		this.availableOn = availableOn;
 	}
 	
+	public boolean getPromoUsed(){
+		return promoUsed;
+	}
+	
+	public void setPromoUsed(boolean promoUsed){
+		this.promoUsed = promoUsed;
+	}
+	
 	public ArrayList <LocalDate[]> getReservedDates(){
 		return reservedDates;
 	}
