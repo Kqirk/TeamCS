@@ -10,7 +10,7 @@ public class Room implements Serializable {
 	private String capacity; //single, double, triple
 	private String name; //suite 
 	private String promo;
-	private boolean promoUsed; //check if promo is used
+	
 	private LocalDate availableOn;
 	private ArrayList <LocalDate[]> reservedDates;
 
@@ -20,7 +20,6 @@ public class Room implements Serializable {
 		this.capacity = capacity;
 		this.price = price;
 		this.promo = "";
-		promoUsed = false; 
 		reservedDates = new ArrayList <LocalDate[]>();
 		availableOn = LocalDate.now();
 	}
@@ -83,14 +82,7 @@ public class Room implements Serializable {
 	public void setAvailableOn (LocalDate availableOn){
 		this.availableOn = availableOn;
 	}
-	
-	public boolean getPromoUsed(){
-		return promoUsed;
-	}
-	
-	public void setPromoUsed(boolean promoUsed){
-		this.promoUsed = promoUsed;
-	}
+
 	
 	public ArrayList <LocalDate[]> getReservedDates(){
 		return reservedDates;

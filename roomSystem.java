@@ -1,7 +1,11 @@
 import javafx.scene.layout.GridPane;
 import javafx.application.Application;
+import javafx.scene.*;
+import javafx.scene.paint.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
@@ -15,6 +19,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.time.LocalDateTime; // Import the LocalDateTime class
+import java.time.format.DateTimeFormatter; // Import the DateTimeFormatter class
 
 
 class Student implements Serializable{
@@ -22,12 +28,18 @@ class Student implements Serializable{
 	private String name; //userid Kirk 
 	private ArrayList <Booking> bookings;
 	private final String role;
+	private boolean isSuspended;
+	private LocalDateTime login;
+	private LocalDateTime logout;
 	
 	public Student (String name, String password){
 		this.name = name;
 		this.password = password;
 		this.role = "Student"; 
-		bookings = new ArrayList <Booking> ();
+		this.bookings = new ArrayList <Booking> ();
+		this.isSuspended = false;
+		this.login = LocalDateTime.now();
+		this.logout = LocalDateTime.now();
 	}
 	
 	public String getName (){
@@ -49,22 +61,58 @@ class Student implements Serializable{
 	public void addBookings(Booking b){
 		bookings.add(b);
 	}
+	
+	public boolean getIsSuspended(){
+		return isSuspended;
+	}
+	
+	public void setIsSuspended(boolean isSuspended){
+		this.isSuspended = isSuspended;
+	}
+	
+	public String getLogin(){
+		DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+		return login.format(myFormatObj);
+	}
+	
+	public void setLogin(LocalDateTime login){
+		this.login = login;
+	}
+	
+	public String getLogout(){
+		DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+		return logout.format(myFormatObj);
+	}
+	
+	public void setLogout(LocalDateTime logout){
+		this.logout = logout;
+	}
 }
 
 class Staff implements Serializable{
 	private String password;
 	private String name;
 	private final String role;
+	private boolean isSuspended;
+	private LocalDateTime login;
+	private LocalDateTime logout;
 	
 	public Staff (){
-		password = "";
-		name = "";
+		this.password = "";
+		this.name = "";
 		this.role = "Staff";
+		this.isSuspended = false;
+		this.login = LocalDateTime.now();
+		this.logout = LocalDateTime.now();
 	}
+	
 	public Staff (String name, String password) {
 		this.name = name;
 		this.password = password;
 		this.role = "Staff";
+		this.isSuspended = false;
+		this.login = LocalDateTime.now();
+		this.logout = LocalDateTime.now();
 	}
 	
 	public String getName (){
@@ -78,6 +126,32 @@ class Staff implements Serializable{
 	public String getRole (){
 		return role;
 	}
+	
+	public boolean getIsSuspended(){
+		return isSuspended;
+	}
+	
+	public void setIsSuspended(boolean isSuspended){
+		this.isSuspended = isSuspended;
+	}
+	
+	public String getLogin(){
+		DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+		return login.format(myFormatObj);
+	}
+	
+	public void setLogin(LocalDateTime login){
+		this.login = login;
+	}
+	
+	public String getLogout(){
+		DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+		return logout.format(myFormatObj);
+	}
+	
+	public void setLogout(LocalDateTime logout){
+		this.logout = logout;
+	}
 }
 
 class Booking implements Serializable{
@@ -86,6 +160,7 @@ class Booking implements Serializable{
 	private String roomName; 
 	private LocalDate checkInDate;
 	private LocalDate checkOutDate; 
+	private boolean promoUsed; //check if promo is used
 	
 	public Booking (Student student, Room room, LocalDate checkInDate, LocalDate checkOutDate){
 		this.student = student;
@@ -135,6 +210,13 @@ class Booking implements Serializable{
 		this.checkOutDate = checkOutDate; 
 	}
 	
+	public boolean getPromoUsed(){
+		return promoUsed;
+	}
+	
+	public void setPromoUsed(boolean promoUsed){
+		this.promoUsed = promoUsed;
+	}
 }
 
 public class roomSystem extends Application {
@@ -158,33 +240,22 @@ public class roomSystem extends Application {
 	
 	//current profile
 	private static Student currentStudent;
+	private static Staff currentStaff;
 	
 	//test variable for show reservation
 	public static int counter;
 	
 	public static void main(String[] args){
-		//openStaffFile("staffFile2.txt");
-		//createStaffFile();
-		//closeStaffFile();
-		readStaffFile("staffFile2.txt");
-		processStaffFile();
-		closeStaffInputFile();
-		Staff staff = new Staff ("Kirk", "1234");
-		students.add(new Student ("Study", "1234"));
-		rooms.add(new Room("Deluxe", "Double", 150));
-		rooms.add(new Room("Premium", "Triple", 180));
-		rooms.add(new Room("Suite", "Double", 250));
-		Room r = new Room("Viewable", "Double", 300);
-		r.setViewable(true);
-		rooms.add(r);
-		staffs.add(staff);
-
+		//saveSession();
+		readSession();
         launch(args);
     }
 	
     @Override
     public void start(Stage stage) {
+		//superUserLogInPage();
 		logInPage();
+		//viewStaffAccount();
     }
 	
 	//default login page
@@ -197,9 +268,23 @@ public class roomSystem extends Application {
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
-		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
+		grid.setPadding (new Insets(10, 10, 10, 75)); //top, right, bottom, left
 		grid.setVgap(8);
 		grid.setHgap(10);
+		
+		//Vbox layout to bandaid 
+		VBox vbox = new VBox();
+		
+		//image 
+		Image image = new Image("UOWLogo.png");
+		ImageView imageView = new ImageView();
+		imageView.setImage(image);
+		imageView.setFitWidth(150);
+		imageView.setPreserveRatio(true);
+		imageView.setSmooth(true);
+		StackPane sp = new StackPane();
+		sp.getChildren().add(imageView);
+		vbox.getChildren().add(sp);
 		
 		//labels
 		Label nameLabel = new Label ("Username");
@@ -224,13 +309,13 @@ public class roomSystem extends Application {
 		
 		//adding action lister
 		loginButton.setOnAction (e -> {
-			if(verifyLogin (nameInput.getText().trim(), passInput.getText().trim())){
-				if (getRole(nameInput.getText().trim()).equals("Staff")){
-					staffLogInPage();
-				} else {
-					setStudentSession(nameInput.getText().trim());
-					studentLogInPage();
-				}
+			if (nameInput.getText().trim().equals("superUser") && passInput.getText().trim().equals("password")){
+				superUserLogInPage();
+				window.close();
+			} else if(verifyLogin (nameInput.getText().trim(), passInput.getText().trim())){
+				window.close();
+			} else {
+				System.out.println("Username or password is incorrect");
 			}
 		});
 		
@@ -246,9 +331,15 @@ public class roomSystem extends Application {
 		GridPane.setConstraints(signupButton, 1, 3);
 		signupButton.setOnAction (e -> studentOrStaff());
 		grid.getChildren().add(signupButton);
+		vbox.getChildren().add(grid);
+		//set save on close
+		window.setOnCloseRequest(e -> {
+			saveSession();
+			System.out.println("Session saved");
+		});
 		
 		//add layout to scene and window
-		Scene scene = new Scene (grid, 300, 200);
+		Scene scene = new Scene (vbox, 450, 310);
 		window.setScene (scene);
 		window.show();
 	}
@@ -258,7 +349,8 @@ public class roomSystem extends Application {
 		for (Staff s : staffs){
 			if (s.getName().equals(userID)){
 				if (s.getPassword().equals(password)){
-					System.out.println("Authenticated");
+					setStaffSession(s);
+					staffLogInPage();
 					return true;
 				}
 			}
@@ -267,7 +359,8 @@ public class roomSystem extends Application {
 		for (Student s : students){
 			if (s.getName().equals(userID)){
 				if (s.getPassword().equals(password)){
-					System.out.println("Authenticated");
+					setStudentSession(s);
+					studentLogInPage();
 					return true;
 				}
 			}
@@ -275,27 +368,14 @@ public class roomSystem extends Application {
 		return false;
 	}
 	
-	public String getRole (String userID){
-		for (Staff s : staffs){
-			if (s.getName().equals(userID)){
-				return s.getRole();
-			}
-		}
-		
-		for (Student st : students){
-			if(st.getName().equals(userID)){
-				return st.getRole();
-			}
-		}
-		return "Role not found";
+	public void setStudentSession (Student s){
+		currentStudent = s; 
+		currentStudent.setLogin(LocalDateTime.now());
 	}
 	
-	public void setStudentSession (String userID){
-			for (Student s : students){
-				if(s.getName().equals(userID)){
-				currentStudent = s; 
-			}
-		}
+	public void setStaffSession (Staff s){
+		currentStaff = s; 
+		currentStaff.setLogin(LocalDateTime.now());
 	}
 	
 	//sign up page 
@@ -305,7 +385,7 @@ public class roomSystem extends Application {
 		Stage window = new Stage ();
 		
 		//set title of stage
-		window.setTitle ("Signup Page");
+		window.setTitle ("Staff Sign Up");
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
@@ -331,7 +411,7 @@ public class roomSystem extends Application {
 		grid.getChildren().addAll(nameLabel, nameInput, passLabel, passInput);
 		
 		//add login button
-		Button signupButton = new Button ("Signup");
+		Button signupButton = new Button ("Sign up");
 		
 		//adding action lister
 		signupButton.setOnAction (e -> {
@@ -348,7 +428,7 @@ public class roomSystem extends Application {
 		
 		//add button 
 		grid.getChildren().add(signupButton);
-		Scene scene = new Scene (grid, 300, 200);
+		Scene scene = new Scene (grid, 300, 150);
 		window.setScene (scene);
 		window.show();
 	}
@@ -359,7 +439,7 @@ public class roomSystem extends Application {
 		Stage window = new Stage ();
 		
 		//set title of stage
-		window.setTitle ("Student Signup Page");
+		window.setTitle ("Student Sign Up");
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
@@ -385,7 +465,7 @@ public class roomSystem extends Application {
 		grid.getChildren().addAll(nameLabel, nameInput, passLabel, passInput);
 		
 		//add login button
-		Button signupButton = new Button ("Signup");
+		Button signupButton = new Button ("Sign up");
 		
 		//adding action lister
 		signupButton.setOnAction (e -> {
@@ -402,13 +482,17 @@ public class roomSystem extends Application {
 		
 		//add button 
 		grid.getChildren().add(signupButton);
-		Scene scene = new Scene (grid, 300, 200);
+		Scene scene = new Scene (grid, 300, 150);
 		window.setScene (scene);
 		window.show();
 	}
 	
 	//sign up helper mathods
 	public boolean userExists (String username){ //username is unique
+		if (username.equals("superUser")){
+			return true; 
+		}
+		
 		for (Staff s : staffs){
 			if (s.getName().equals(username)){
 				return true;
@@ -435,7 +519,7 @@ public class roomSystem extends Application {
 		grid.setHgap(10);
 		
 		//Label text "are you student or staff?"
-		Label question = new Label ("Are you a student or staff");
+		Label question = new Label ("	    Are you a student or staff?");
 		GridPane.setConstraints(question, 0, 0);
 		grid.getChildren().add(question);
 		
@@ -461,7 +545,7 @@ public class roomSystem extends Application {
 			window.close();
 		});
 		
-		Scene scene = new Scene (grid, 200, 300);
+		Scene scene = new Scene (grid, 260, 100);
 		window.setScene (scene);
 		window.show();
 		
@@ -479,25 +563,95 @@ public class roomSystem extends Application {
 	}
 	
 	public void staffLogInPage(){
-		Stage window = new Stage ();
-		window.setTitle("(Staff) You have logged in");
-		
-		//Label label = new Label ("Welcome to UOW accomodations");
-		GridPane grid = new GridPane();
-		
-		//grid.getChildren().add(label);
-		
-		Button b = new Button ("Show all rooms");
-		b.setOnAction(e -> showAllRooms());
-		grid.getChildren().add(b);
-		
-		Button createRoom = new Button ("Create Room");
-		createRoom.setOnAction(e -> createRoom());
-		grid.add(createRoom, 0, 1);
-	
-		Scene scene = new Scene (grid, 640, 480);
-		window.setScene (scene);
-		window.show();
+		if (currentStaff.getIsSuspended()){
+			Stage window = new Stage();
+			window.setTitle("Suspended");
+			Label label = new Label ("Your account has been suspended.");
+			Label label2 = new Label ("Please contact the admin.");
+			
+			GridPane grid = new GridPane();
+			grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
+			grid.setVgap(8);
+			grid.setHgap(10);
+			
+			grid.add(label, 0, 0);
+			grid.add(label2, 0, 1);
+			
+			Scene scene = new Scene(grid, 300, 200);
+			
+			window.setScene(scene);
+			window.show();
+		} else {
+			Stage window = new Stage ();
+			window.setTitle("Staff Login Page");
+			
+			//uow logo
+			Image image = new Image("UOWLogo.png");
+			ImageView imageView = new ImageView();
+			imageView.setImage(image);
+			imageView.setFitWidth(150);
+			imageView.setPreserveRatio(true);
+			imageView.setSmooth(true);
+			
+			StackPane sp = new StackPane();
+			sp.getChildren().add(imageView);
+			
+			VBox vbox = new VBox();
+			vbox.getChildren().add(sp);
+			
+			GridPane grid = new GridPane();
+			grid.setPadding (new Insets(10, 10, 10, 75)); //top, right, bottom, left
+			grid.setVgap(8);
+			grid.setHgap(10);
+			
+			//room image
+			Image roomImage = new Image("room.png");
+			ImageView iv = new ImageView();
+			iv.setImage(roomImage);
+			iv.setFitWidth(50);
+			iv.setPreserveRatio(true);
+			
+			//show all rooms button
+			Button b = new Button ("Show all rooms", iv);
+			b.setOnAction(e -> showAllRooms());
+			b.setMinHeight(150);
+			b.setMinWidth(150);
+			grid.add(b, 0, 0);
+			
+			//create room image
+			Image createRoomImage = new Image("roomcreate.png");
+			ImageView iv2 = new ImageView();
+			iv2.setImage(createRoomImage);
+			iv2.setFitWidth(50);
+			iv2.setPreserveRatio(true);
+			
+			//create room button
+			Button createRoom = new Button ("Create Room", iv2);
+			createRoom.setOnAction(e -> createRoom());
+			createRoom.setMinHeight(150);
+			createRoom.setMinWidth(150);
+			grid.add(createRoom, 1, 0);
+			
+			//log out button
+			Button logout = new Button("Logout");
+			logout.setOnAction(e -> {
+				currentStaff.setLogout(LocalDateTime.now());
+				currentStaff = null;
+				window.close();
+				logInPage();
+			});
+			logout.setMinHeight(150);
+			logout.setMinWidth(150);
+			
+			grid.add(logout, 2, 0);
+			
+			StackPane sp2 = new StackPane();
+			sp2.getChildren().add(grid);
+			vbox.getChildren().add(sp2);
+			Scene scene = new Scene (vbox, 640, 400);
+			window.setScene (scene);
+			window.show();
+		}
 	}
 	
 	//Staff window to create room
@@ -508,7 +662,7 @@ public class roomSystem extends Application {
 		GridPane grid = new GridPane();
 		grid.setHgap(10);
         grid.setVgap(10);
-		
+		grid.setPadding (new Insets(10, 10, 10, 10));
 		
 		Label roomName = new Label ("Room Name:");
 		TextField nameInput = new TextField();
@@ -590,133 +744,281 @@ public class roomSystem extends Application {
 		GridPane.setConstraints(roomPrice, 0, 1); //first column, 2nd row
 		Label priceDetail = new Label ("$" + r.getPrice());
 		GridPane.setConstraints(priceDetail, 1, 1); //second column, first row
+		TextField newPrice = new TextField();
+		newPrice.setPromptText("Enter new price");
+		GridPane.setConstraints(newPrice, 2, 1);
 		
 		Label roomCapacity = new Label ("Room capacity: ");
 		GridPane.setConstraints(roomCapacity, 0, 2); //first column, 3rd row
 		Label capacityDetail = new Label (r.getCapacity());
 		GridPane.setConstraints(capacityDetail, 1, 2); //second column, first row
+		TextField newCapacity = new TextField();
+		newCapacity.setPromptText("Enter new capacity");
+		GridPane.setConstraints(newCapacity, 2, 2);
+	
 		
 		Label availableFrom = new Label ("Available after: ");
 		GridPane.setConstraints(availableFrom, 0, 3); //first column, 4rd row
 		Label dateValue = new Label (r.getAvailableOn().toString());
 		GridPane.setConstraints(dateValue, 1, 3); //2nd column, 4rd row
-		grid.getChildren().addAll(roomName, nameDetail, roomPrice, priceDetail, roomCapacity, capacityDetail);
-		grid.getChildren().addAll(availableFrom, dateValue, newName);
+		DatePicker newDate = new DatePicker();
+		GridPane.setConstraints(newDate, 2, 3);
 		
-		Scene scene = new Scene (grid, 300, 300);
+		Label promo = new Label ("Promo code: ");
+		GridPane.setConstraints(promo, 0, 4);
+		Label promoDetail = new Label(r.getPromo());
+		GridPane.setConstraints(promoDetail, 1, 4);
+		TextField newPromo = new TextField();
+		newPromo.setPromptText("Enter new promo");
+		GridPane.setConstraints(newPromo, 2, 4);
+		
+		Label viewable = new Label ("Viewable: ");
+		GridPane.setConstraints(viewable, 0, 5);
+		ChoiceBox<Boolean> choiceBox = new ChoiceBox<>();
+		choiceBox.getItems().add(true);
+		choiceBox.getItems().add(false);
+		choiceBox.setValue(r.getViewable());
+		GridPane.setConstraints(choiceBox, 1, 5);
+		
+		Button change = new Button("Change");
+		change.setOnAction(e -> {
+			if (!newName.getText().trim().equals("")){
+				r.setName(newName.getText().trim());
+			}
+			if (!newPrice.getText().trim().equals("")){
+				r.setPrice(Double.valueOf(newPrice.getText().trim()));
+			}
+			if (!newCapacity.getText().trim().equals("")){
+				r.setCapacity(newCapacity.getText().trim());
+			}
+			if (newDate.getValue() != null){
+				r.setAvailableOn(newDate.getValue());
+			}
+			if (!newPromo.getText().trim().equals("")){
+				r.setPromo(newPromo.getText().trim());
+			} 
+			
+			r.setViewable(choiceBox.getValue());
+		});
+		GridPane.setConstraints(change, 0, 6);
+		
+		grid.getChildren().addAll(roomName, nameDetail, roomPrice, priceDetail, roomCapacity, capacityDetail);
+		grid.getChildren().addAll(availableFrom, dateValue, newName, newPrice, newCapacity, newDate, viewable, choiceBox);
+		grid.getChildren().addAll (promo, promoDetail, newPromo, change);
+		
+		Scene scene = new Scene (grid, 400, 300);
 		window.setScene(scene);
 		window.show();
 	}
 	public void studentLogInPage(){
-		Stage window = new Stage ();
-		window.setTitle("(Student) You have logged in");
-		
-		Label label = new Label ("Welcome to UOW accomodations");
-		VBox vbox = new VBox ();
-		
-		vbox.getChildren().add(label);
-		
-		Button bookRoom = new Button("Book Room");
-		bookRoom.setOnAction(e -> showAvailableRooms());
-		vbox.getChildren().add(bookRoom);
-		Button showRooms = new Button("Show reservations");
-		showRooms.setOnAction (e -> showBookedRooms());
-		vbox.getChildren().add(showRooms);
-		Scene scene = new Scene (vbox, 640, 480);
-		window.setScene (scene);
-		window.show();
+		if (currentStudent.getIsSuspended()){
+			Stage window = new Stage();
+			window.setTitle("Suspended");
+			Label label = new Label ("Your account has been suspended.");
+			Label label2 = new Label ("Please contact the admin.");
+			
+			GridPane grid = new GridPane();
+			grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
+			grid.setVgap(8);
+			grid.setHgap(10);
+			
+			grid.add(label, 0, 0);
+			grid.add(label2, 0, 1);
+			
+			Scene scene = new Scene(grid, 300, 200);
+			
+			window.setScene(scene);
+			window.show();
+		} else {
+			//create stage
+			Stage window = new Stage ();
+			window.setTitle("(Student) You have logged in");
+			
+			//uow logo
+			Image image = new Image("UOWLogo.png");
+			ImageView imageView = new ImageView();
+			imageView.setImage(image);
+			imageView.setFitWidth(150);
+			imageView.setPreserveRatio(true);
+			imageView.setSmooth(true);
+			
+			//add image to stackpane
+			StackPane sp = new StackPane();
+			sp.getChildren().add(imageView);
+			
+			//Vbox main layout
+			VBox vbox = new VBox ();
+			vbox.getChildren().add(sp);
+			
+			//hbox below stackpane image
+			HBox hbox = new HBox(8);
+			hbox.setPadding (new Insets(10, 10, 10, 75)); //top, right, bottom, left
+			
+			//room image
+			Image roomImage = new Image("room.png");
+			ImageView iv = new ImageView();
+			iv.setImage(roomImage);
+			iv.setFitWidth(50);
+			iv.setPreserveRatio(true);
+			
+			//Book room button
+			Button bookRoom = new Button("Book Room", iv);
+			bookRoom.setOnAction(e -> showAvailableRooms());
+			bookRoom.setMinHeight(150);
+			bookRoom.setMinWidth(150);
+			hbox.getChildren().add(bookRoom);
+			
+			//list image
+			Image listImage = new Image("list.png");
+			ImageView iv2 = new ImageView();
+			iv2.setImage(listImage);
+			iv2.setFitWidth(50);
+			iv2.setPreserveRatio(true);
+			
+			//show reservation button
+			Button showRooms = new Button("Show reservations", iv2);
+			showRooms.setOnAction (e -> showBookedRooms());
+			showRooms.setMinHeight(150);
+			showRooms.setMinWidth(150);
+			hbox.getChildren().add(showRooms);
+			
+			//log out button
+			Button logout = new Button("Logout");
+			logout.setOnAction(e -> {
+				currentStudent.setLogout(LocalDateTime.now());
+				currentStudent = null;
+				window.close();
+				logInPage();
+			});
+			logout.setMinHeight(150);
+			logout.setMinWidth(150);
+			hbox.getChildren().add(logout);
+			
+			//add hbox to vbox
+			vbox.getChildren().add(hbox);
+			
+			Scene scene = new Scene (vbox, 640, 400);
+			window.setScene (scene);
+			window.show();
+		}
 	}	
 	
 	//student to view his own reservations
 	@SuppressWarnings("unchecked")
 	public void showBookedRooms(){
-		//counter for resrvations
-		counter = 0;
-		final int max = currentStudent.getBookings().size() - 1;
-		
-		Stage window = new Stage ();
-		window.setTitle("Show booked rooms");
-		
-		Label reservationNo = new Label ("Reservation " + String.valueOf(counter + 1));
-		
-		Label name = new Label ("Name: ");
-		Label nameValue = new Label(currentStudent.getBookings().get(counter).getRoom().getName());
-		
-		Label price = new Label ("Price: ");
-		Label priceValue = new Label(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
-		
-		Label checkInDate = new Label("Check in: ");
-		Label checkInValue = new Label(currentStudent.getBookings().get(counter).getCheckInDate().toString());
-		
-		Label checkOutDate = new Label("Check out: ");
-		Label checkOutValue = new Label(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
-		
-		Label totalPrice =  new Label ("Total price: "); 
-		Label tPriceValue = new Label (String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice() * (int)currentStudent.getBookings().get(counter).getCheckInDate()
-								.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
-								
-								
-		//delete button 
-		Button delete = new Button ("Delete");
-		delete.setOnAction(e-> deleteButtonClicked());
-		
-		//modify button
-		Button modify = new Button ("Modify");
-		modify.setOnAction(e -> studentModifyButtonClicked(currentStudent.getBookings().get(counter)));
-		
-		//next reservation button
-		Button next = new Button ("Next");
-		next.setOnAction(e -> {
-			if (counter != max){
-				reservationNo.setText("Reservation " + String.valueOf(++counter + 1));
-				nameValue.setText(currentStudent.getBookings().get(counter).getRoom().getName());
-				priceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
-				checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
-				checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
-				tPriceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice() * (int)currentStudent.getBookings().get(counter).getCheckInDate()
-								.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
-			}
-		});
-		
-		//previous reservation button
-		Button previous = new Button ("Previous");
-		previous.setOnAction(e -> {
-			if (counter != 0){
-				reservationNo.setText("Reservation " + String.valueOf(--counter + 1));
-				nameValue.setText(currentStudent.getBookings().get(counter).getRoom().getName());
-				priceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice()));
-				checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
-				checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
-				tPriceValue.setText(String.valueOf(currentStudent.getBookings().get(counter).getRoom().getPrice() * (int)currentStudent.getBookings().get(counter).getCheckInDate()
-								.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
-			}
-		});
-		
-		//create layout
-		GridPane grid = new GridPane();
-		grid.setPadding (new Insets(10, 10, 10, 10));
-		grid.setVgap(8);
-		grid.setHgap(10);
-		
-		//add components to layout
-		grid.add(reservationNo, 0, 0);
-		grid.add(name, 0, 1);
-		grid.add(nameValue, 1, 1);
-		grid.add(price, 0, 2);
-		grid.add(priceValue, 1, 2);
-		grid.add(checkInDate, 0, 3);
-		grid.add(checkInValue, 1, 3);
-		grid.add(checkOutDate, 0, 4);
-		grid.add(checkOutValue, 1, 4);
-		grid.add(previous, 0, 5);
-		grid.add(next, 1, 5);
-		grid.add(modify, 0, 6);
-		grid.add(totalPrice, 0, 7);
-		grid.add(tPriceValue, 1, 7);
-		
-		Scene scene = new Scene (grid);
-		window.setScene(scene);
-		window.show();
+		if (currentStudent.getBookings().size() == 0){
+			Stage window = new Stage();
+			VBox vBox = new VBox();
+			Label noReservation = new Label("You have no reservations currently");
+			vBox.getChildren().add(noReservation);
+			vBox.setPadding (new Insets(10, 10, 10, 10));
+			Scene scene = new Scene (vBox, 300, 200);
+			window.setScene(scene);
+			window.show();
+		} else {
+			//counter for resrvations
+			counter = 0;
+			final int max = currentStudent.getBookings().size() - 1;
+			
+			Stage window = new Stage ();
+			window.setTitle("Show booked rooms");
+			
+			Label reservationNo = new Label ("Reservation " + String.valueOf(counter + 1));
+			
+			Label name = new Label ("Name: ");
+			Label nameValue = new Label(currentStudent.getBookings().get(counter).getRoom().getName());
+			
+			Label price = new Label ("Price: ");
+			//check if promo used
+			double roomPrice = currentStudent.getBookings().get(counter).getPromoUsed() == true? (currentStudent.getBookings().get(counter).getRoom().getPrice() * 0.8) : (currentStudent.getBookings().get(counter).getRoom().getPrice());
+			Label priceValue = new Label(String.valueOf(roomPrice));
+	
+			Label checkInDate = new Label("Check in: ");
+			Label checkInValue = new Label(currentStudent.getBookings().get(counter).getCheckInDate().toString());
+			
+			Label checkOutDate = new Label("Check out: ");
+			Label checkOutValue = new Label(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+			
+			Label totalPrice =  new Label ("Total price: "); 
+			Label tPriceValue = new Label (String.valueOf(roomPrice * (int)currentStudent.getBookings().get(counter).getCheckInDate()
+									.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
+									
+									
+			//delete button 
+			Button delete = new Button ("Delete");
+			delete.setOnAction(e -> {
+				//remove date from room booking
+				LocalDate[] removeDate = new LocalDate[2];
+				removeDate[0] = currentStudent.getBookings().get(counter).getCheckInDate();
+				removeDate[1] = currentStudent.getBookings().get(counter).getCheckOutDate();
+				currentStudent.getBookings().get(counter).getRoom().removeReservedDates(removeDate);
+				
+				//remove booking from student arraylist
+				currentStudent.getBookings().remove(currentStudent.getBookings().get(counter));
+				window.close();
+			});
+			
+			//modify button
+			Button modify = new Button ("Modify");
+			modify.setOnAction(e -> studentModifyButtonClicked(currentStudent.getBookings().get(counter)));
+			
+			//next reservation button
+			Button next = new Button ("Next");
+			next.setOnAction(e -> {
+				if (counter != max){
+					reservationNo.setText("Reservation " + String.valueOf(++counter + 1));
+					nameValue.setText(currentStudent.getBookings().get(counter).getRoom().getName());
+					double roomsPrice = currentStudent.getBookings().get(counter).getPromoUsed() == true? (currentStudent.getBookings().get(counter).getRoom().getPrice() * 0.8) : (currentStudent.getBookings().get(counter).getRoom().getPrice());
+					priceValue.setText(String.valueOf(roomsPrice));
+					checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
+					checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+					tPriceValue.setText(String.valueOf(roomsPrice * (int)currentStudent.getBookings().get(counter).getCheckInDate()
+									.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
+				}
+			});
+			
+			//previous reservation button
+			Button previous = new Button ("Previous");
+			previous.setOnAction(e -> {
+				if (counter != 0){
+					reservationNo.setText("Reservation " + String.valueOf(--counter + 1));
+					nameValue.setText(currentStudent.getBookings().get(counter).getRoom().getName());
+					double roomsPrice = currentStudent.getBookings().get(counter).getPromoUsed() == true? (currentStudent.getBookings().get(counter).getRoom().getPrice() * 0.8) : (currentStudent.getBookings().get(counter).getRoom().getPrice());
+					priceValue.setText(String.valueOf(roomsPrice));
+					checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
+					checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+					tPriceValue.setText(String.valueOf(roomsPrice * (int)currentStudent.getBookings().get(counter).getCheckInDate()
+									.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
+				}
+			});
+			
+			//create layout
+			GridPane grid = new GridPane();
+			grid.setPadding (new Insets(10, 10, 10, 10));
+			grid.setVgap(8);
+			grid.setHgap(10);
+			
+			//add components to layout
+			grid.add(reservationNo, 0, 0);
+			grid.add(name, 0, 1);
+			grid.add(nameValue, 1, 1);
+			grid.add(price, 0, 2);
+			grid.add(priceValue, 1, 2);
+			grid.add(checkInDate, 0, 3);
+			grid.add(checkInValue, 1, 3);
+			grid.add(checkOutDate, 0, 4);
+			grid.add(checkOutValue, 1, 4);
+			grid.add(previous, 0, 5);
+			grid.add(next, 1, 5);
+			grid.add(modify, 0, 6);
+			grid.add(delete, 1, 6);
+			grid.add(totalPrice, 0, 7);
+			grid.add(tPriceValue, 1, 7);
+			
+			Scene scene = new Scene (grid);
+			window.setScene(scene);
+			window.show();
+		}
 	}
 	
 	//student modify function
@@ -736,7 +1038,7 @@ public class roomSystem extends Application {
                             }   
 							
 							for (LocalDate[] array : b.getRoom().getReservedDates()){
-								if (item.isBefore(array[1].plusDays(1)) && item.isAfter(array[0].minusDays(1))){
+								if (item.isBefore(array[1]) && item.isAfter(array[0].minusDays(1))){
 									setDisable(true);
                                     setStyle("-fx-background-color: #ffc0cb;");
 								}
@@ -797,19 +1099,38 @@ public class roomSystem extends Application {
 				oldDates[1] =  b.getCheckOutDate();
 				System.out.println(oldDates[0] + " " + oldDates[1]);
 				
-				//delete old dates from Room arraylist
-				b.getRoom().removeReservedDates(oldDates);
-				
-				//add new dates to Room reserved dates
-				b.getRoom().getReservedDates().add(newDates);
-				for (LocalDate[] a : b.getRoom().getReservedDates()){
-					System.out.println(a[0] + " " + a[1]);
+				if (validStay(b.getRoom().getReservedDates(), newDates[0], newDates[1])){
+					System.out.println("Valid stay");
+					//delete old dates from Room arraylist
+					b.getRoom().removeReservedDates(oldDates);
+					
+					//add new dates to Room reserved dates
+					b.getRoom().getReservedDates().add(newDates);
+					
+					//edit booking
+					b.setCheckInDate(newCheckInValue.getValue());
+					b.setCheckOutDate(newCheckOutValue.getValue());
+				} else {
+					//delete the old dates first 
+					b.getRoom().removeReservedDates(oldDates);
+					
+					//if valid after removing the current booking
+					if (validStay(b.getRoom().getReservedDates(), newDates[0], newDates[1])){
+						System.out.println("Valid stay after deleting");
+						//add new dates to Room reserved dates
+						b.getRoom().getReservedDates().add(newDates);
+						
+						//edit booking
+						b.setCheckInDate(newCheckInValue.getValue());
+						b.setCheckOutDate(newCheckOutValue.getValue());
+					} else {
+						//add back the current booking
+						b.getRoom().getReservedDates().add(oldDates);
+						prompt.setText("Not a valid stay");
+					}
 				}
 				
-				//edit booking
-				b.setCheckInDate(newCheckInValue.getValue());
-				b.setCheckOutDate(newCheckOutValue.getValue());
-				
+						
 				
 			}
 		});
@@ -857,7 +1178,7 @@ public class roomSystem extends Application {
                         public void updateItem(LocalDate item, boolean empty) {
                             super.updateItem(item, empty);
                            
-                            if (item.isBefore(r.getAvailableOn().plusDays(1))) {
+                            if (item.isBefore(r.getAvailableOn())) {
                                     setDisable(true);
                                     setStyle("-fx-background-color: #ffc0cb;");
                             }   
@@ -883,15 +1204,20 @@ public class roomSystem extends Application {
         Scene scene = new Scene(vbox, 400, 400);
         window.setScene(scene);
 		
+		
+		//create date picker for check in and out
         checkInDatePicker = new DatePicker();
-        checkOutDatePicker = new DatePicker();
+        checkOutDatePicker = new DatePicker();		
 		
-        checkInDatePicker.setValue(LocalDate.now());
-		checkOutDatePicker.setValue(checkInDatePicker.getValue().plusDays(1));
-		
+		//block out days that are not reservable
 		checkInDatePicker.setDayCellFactory(dayCellFactory);
 		checkOutDatePicker.setDayCellFactory(dayCellFactory);
         
+		//don't allow user to type
+		checkInDatePicker.setEditable(false);
+		checkOutDatePicker.setEditable(false);
+		
+		//create grid layout
         GridPane gridPane = new GridPane();
         gridPane.setHgap(10);
         gridPane.setVgap(10);
@@ -916,18 +1242,22 @@ public class roomSystem extends Application {
 		gridPane.add(prompt, 0, 6);
 		Button book = new Button ("Book");
 		book.setOnAction(e -> {
-			if (promoValue.getText().trim().equals("")){
-				bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue());
-				System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
-				window.close();
-			} else if (!r.getPromo().equals(promoValue.getText().trim())){
-				prompt.setText("Promo Code Is Incorrect");
-			} else if (r.getPromo().equals(promoValue.getText().trim())){
-				bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue());
-				r.setPromoUsed(true);
-				r.setPrice(r.getPrice() * 0.8);
-				System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
-				window.close();
+			//if valid stay
+			if (validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue())){
+				//if user didn't enter promo code
+				if (promoValue.getText().trim().equals("")){
+					bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue(), false);
+					System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
+					window.close();
+				} else if (r.getPromo().equals(promoValue.getText().trim())){ //if promo code is true
+					System.out.println("Promo code true");
+					bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue(), true);
+					window.close();
+				} else if (!r.getPromo().equals(promoValue.getText().trim())){ //promo code incorrect
+					prompt.setText("Promo Code Is Incorrect");
+				} 
+			} else {
+				prompt.setText("Not A Valid Stay");
 			}
 		});
 		gridPane.add(book, 0, 5);
@@ -936,21 +1266,20 @@ public class roomSystem extends Application {
 	}
 	
 	public static boolean validStay (ArrayList<LocalDate[]> dates, LocalDate checkIn, LocalDate checkOut){
-		boolean valid = true;
-		
 		for (LocalDate date = checkIn; date.isBefore(checkOut); date = date.plusDays(1)){
 			for(LocalDate[] a : dates){
-				if ((date.isBefore(a[1]) && date.isAfter(a[0]))){
+				if ((date.isBefore(a[1]) && date.isAfter(a[0].minusDays(1)))){
 					return false;
 				}
 			}
 		}
-		return valid;
+		return true;
 	}
 	
-	public static void bookButtonClicked(Room r, LocalDate checkIn, LocalDate checkOut){
+	public static void bookButtonClicked(Room r, LocalDate checkIn, LocalDate checkOut, boolean promoCodeUsed){
 		r.addReservedDates(checkIn, checkOut);
 		Booking b = new Booking (currentStudent, r, checkIn, checkOut);
+		b.setPromoUsed(promoCodeUsed);
 		currentStudent.addBookings(b);
 		//LocalDate[] array = r.getReservedDates().get(0);
 		//System.out.printf("Booked check in: %s%nCheck out: %s%n", array[0].toString(), array[1].toString());
@@ -1042,12 +1371,13 @@ public class roomSystem extends Application {
 		table.getColumns().addAll(nameColumn, priceColumn, capacityColumn, dateColumn);
 		
 		//delete button test
-		Button delete = new Button ("View Room");
-		delete.setOnAction(e-> viewButtonClicked());
+		Button view = new Button ("View Room");
+		view.setOnAction(e-> viewButtonClicked());
 		
 		//create layout
-		VBox vBox = new VBox();
-		vBox.getChildren().addAll(table, delete);
+		VBox vBox = new VBox(8);
+		vBox.getChildren().addAll(table, view);
+		vBox.setPadding (new Insets(0, 10, 10, 10)); //top, right, bottom, left
 		
 		Scene scene = new Scene (vBox);
 		window.setScene(scene);
@@ -1118,13 +1448,276 @@ public class roomSystem extends Application {
 		window.show();
 	}
 	
+	//super user methods/windows
+	public void superUserLogInPage(){
+		Stage window = new Stage(); 
+		window.setTitle("SuperUser Login Page");
+		
+		//grid layout
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); 
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		//label for create account header
+		Label createAccount = new Label ("Create Account For: ");
+		
+		//create staff account button
+		Button createStaff = new Button("Staff");
+		createStaff.setOnAction(e -> staffSignUpPage());
+		
+		//create student account button
+		Button createStudent = new Button("Student");
+		createStudent.setOnAction(e -> studentSignUpPage());
+		
+		//label for manage account header
+		Label manageAccount = new Label ("View And Manage Account For: ");
+		
+		//manage staff account button
+		Button manageStaff = new Button ("Staff");
+		manageStaff.setOnAction(e -> viewStaffAccount());
+		
+		//manage student account button
+		Button manageStudent = new Button ("Student");
+		manageStudent.setOnAction(e -> viewStudentAccount());
+		
+		//logout button
+		Button logout = new Button ("Logout");
+		logout.setOnAction(e -> {
+			logInPage();
+			window.close();
+		});
+		
+		//add components to layout
+		grid.add(createAccount, 0, 0);
+		grid.add(createStaff, 0, 1); 
+		grid.add(createStudent, 1, 1);
+		grid.add(manageAccount, 0, 2);
+		grid.add(manageStaff, 0, 3);
+		grid.add(manageStudent, 1, 3);
+		grid.add(logout, 0, 4);
+		
+		Scene scene = new Scene (grid, 400, 300);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	public void viewStaffAccount(){
+		Stage window = new Stage(); 
+		window.setTitle("SuperUser View Staff");
+		
+		//grid layout
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); 
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		//counter 
+		counter = 0; 
+		final int max = staffs.size() - 1; 
+		
+		//Labels for displaying information
+		Label staffNo = new Label ("Staff No " + (counter + 1));
+		
+		Label name =  new Label ("Name: ");
+		Label staffName = new Label (staffs.get(counter).getName());
+		
+		Label password = new Label ("Password: ");
+		Label staffPassword = new Label(staffs.get(counter).getPassword());
+		
+		Label login = new Label ("Last Login: ");
+		Label lastLogin = new Label(staffs.get(counter).getLogin());
+		
+		Label logout = new Label("Last Logout: ");
+		Label lastLogout = new Label(staffs.get(counter).getLogout());
+		
+		Label suspended = new Label ("Suspended: ");
+		Label isSuspended = new Label(staffs.get(counter).getIsSuspended()? "Yes" : "No");
+		
+		//suspend button
+		Button suspend = new Button (staffs.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+		suspend.setOnAction(e -> {
+			staffs.get(counter).setIsSuspended(!staffs.get(counter).getIsSuspended());
+			isSuspended.setText(staffs.get(counter).getIsSuspended()? "Yes" : "No");
+			suspend.setText(staffs.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+		});
+		
+		//next button
+		Button next = new Button ("Next");
+		next.setOnAction(e -> {
+			if (counter != max){
+				staffNo.setText("Staff No " + (++counter + 1));
+				staffName.setText(staffs.get(counter).getName());
+				staffPassword.setText(staffs.get(counter).getPassword());
+				lastLogin.setText(staffs.get(counter).getLogin());
+				lastLogout.setText(staffs.get(counter).getLogout());
+				isSuspended.setText(staffs.get(counter).getIsSuspended()? "Yes" : "No");
+				suspend.setText(staffs.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+			}
+		});
+		
+		//prev button
+		Button previous = new Button ("Prev");
+		previous.setOnAction(e -> {
+			if (counter != 0){
+				staffNo.setText("Staff No " + (--counter + 1));
+				staffName.setText(staffs.get(counter).getName());
+				staffPassword.setText(staffs.get(counter).getPassword());
+				lastLogin.setText(staffs.get(counter).getLogin());
+				lastLogout.setText(staffs.get(counter).getLogout());
+				isSuspended.setText(staffs.get(counter).getIsSuspended()? "Yes" : "No");
+				suspend.setText(staffs.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+			}
+			
+		});
+		
+		grid.add(staffNo, 0, 0);
+		grid.add(name, 0, 1);
+		grid.add(staffName, 1, 1);
+		grid.add(password, 0, 2);
+		grid.add(staffPassword, 1, 2);
+		grid.add(login, 0, 3);
+		grid.add(lastLogin, 1, 3);
+		grid.add(logout, 0, 4);
+		grid.add(lastLogout, 1, 4);
+		grid.add(suspended, 0, 5);
+		grid.add(isSuspended, 1, 5);
+		grid.add(suspend, 2, 5);
+		grid.add(previous, 0, 6);
+		grid.add(next, 1, 6);
+		
+		Scene scene = new Scene (grid, 400, 300);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	//view student account
+	public void viewStudentAccount(){
+		Stage window = new Stage(); 
+		window.setTitle("SuperUser View Student");
+		
+		//grid layout
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); 
+		grid.setVgap(8);
+		grid.setHgap(10);
+		
+		//counter 
+		counter = 0; 
+		final int max = students.size() - 1; 
+		
+		//Labels for displaying information
+		Label studentNo = new Label ("Student No " + (counter + 1));
+		
+		Label name =  new Label ("Name: ");
+		Label studentName = new Label (students.get(counter).getName());
+		
+		Label password = new Label ("Password: ");
+		Label studentPassword = new Label(students.get(counter).getPassword());
+		
+		Label login = new Label ("Last Login: ");
+		Label lastLogin = new Label(students.get(counter).getLogin());
+		
+		Label logout = new Label("Last Logout: ");
+		Label lastLogout = new Label(students.get(counter).getLogout());
+		
+		Label suspended = new Label ("Suspended: ");
+		Label isSuspended = new Label(students.get(counter).getIsSuspended()? "Yes" : "No");
+		
+		//suspend button
+		Button suspend = new Button (students.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+		suspend.setOnAction(e -> {
+			students.get(counter).setIsSuspended(!students.get(counter).getIsSuspended());
+			isSuspended.setText(students.get(counter).getIsSuspended()? "Yes" : "No");
+			suspend.setText(students.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+		});
+		
+		//next button
+		Button next = new Button ("Next");
+		next.setOnAction(e -> {
+			if (counter != max){
+				studentNo.setText("Student No " + (++counter + 1));
+				studentName.setText(students.get(counter).getName());
+				studentPassword.setText(students.get(counter).getPassword());
+				lastLogin.setText(students.get(counter).getLogin());
+				lastLogout.setText(students.get(counter).getLogout());
+				isSuspended.setText(students.get(counter).getIsSuspended()? "Yes" : "No");
+				suspend.setText(students.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+			}
+		});
+		
+		//prev button
+		Button previous = new Button ("Prev");
+		previous.setOnAction(e -> {
+			if (counter != 0){
+				studentNo.setText("Student No " + (--counter + 1));
+				studentName.setText(students.get(counter).getName());
+				studentPassword.setText(students.get(counter).getPassword());
+				lastLogin.setText(students.get(counter).getLogin());
+				lastLogout.setText(students.get(counter).getLogout());
+				isSuspended.setText(students.get(counter).getIsSuspended()? "Yes" : "No");
+				suspend.setText(students.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+			}
+			
+		});
+		
+		grid.add(studentNo, 0, 0);
+		grid.add(name, 0, 1);
+		grid.add(studentName, 1, 1);
+		grid.add(password, 0, 2);
+		grid.add(studentPassword, 1, 2);
+		grid.add(login, 0, 3);
+		grid.add(lastLogin, 1, 3);
+		grid.add(logout, 0, 4);
+		grid.add(lastLogout, 1, 4);
+		grid.add(suspended, 0, 5);
+		grid.add(isSuspended, 1, 5);
+		grid.add(suspend, 2, 5);
+		grid.add(previous, 0, 6);
+		grid.add(next, 1, 6);
+		
+		Scene scene = new Scene (grid, 400, 300);
+		window.setScene(scene);
+		window.show();
+	}
+	
 	//file processing methods
+	//save session
+	private static void saveSession(){
+		openStaffFile("staffFile2.txt");
+		createStaffFile();
+		closeStaffFile();
+		
+		openStudentFile("studentFile.txt");
+		createStudentFile();
+		closeStudentFile();
+		
+		openRoomFile("roomFile.txt");
+		createRoomFile();
+		closeRoomFile();
+	}
+	
+	//read session
+	private static void readSession(){
+		readStaffFile("staffFile2.txt");
+		processStaffFile();
+		closeStaffInputFile();
+		
+		readStudentFile("studentfile.txt");
+		processStudentFile();
+		closeStudentInputFile();
+		
+		readRoomFile("roomFile.txt");
+		processRoomFile();
+		closeRoomInputFile();
+	}
+	
 	//create StaffFile (for closing application)
 	private static void openStaffFile (String fileName){
 		try{
 			staffOutput = new ObjectOutputStream(Files.newOutputStream(Paths.get(fileName)));
 		} catch (IOException e){
-			System.out.println("Error in opening file");
+			System.out.println("Error in opening staff file");
 		}
 	}
 	
@@ -1135,9 +1728,8 @@ public class roomSystem extends Application {
 			for (Staff s : staffs){
 				staffOutput.writeObject(s);
 			}
-			System.out.println("Kqirk written to staffoutput");
 		} catch (IOException e){
-			System.out.println("Error in writing to file");
+			System.out.println("Error in writing to staff file");
 		}
 	}
 	
@@ -1147,7 +1739,65 @@ public class roomSystem extends Application {
 				staffOutput.close();
 			}
 		} catch (IOException e){
-			System.out.println("Error in closing file");
+			System.out.println("Error in closing staff file");
+		}
+	}
+	
+	//create StudentFile (save on close)
+	private static void openStudentFile (String fileName){
+		try{
+			studentOutput = new ObjectOutputStream(Files.newOutputStream(Paths.get(fileName)));
+		} catch (IOException e){
+			System.out.println("Error in opening student file");
+		}
+	}
+	
+	private static void createStudentFile (){
+		try {
+			for (Student s : students){
+				studentOutput.writeObject(s);
+			}
+		} catch (IOException e){
+			System.out.println("Error in writing to student file");
+		}
+	}
+	
+	private static void closeStudentFile(){
+		try {
+			if (studentOutput != null){
+				studentOutput.close();
+			}
+		} catch (IOException e){
+			System.out.println("Error in closing student file");
+		}
+	}
+	
+	//create room file (save on close)
+	private static void openRoomFile (String fileName){
+		try{
+			roomOutput = new ObjectOutputStream(Files.newOutputStream(Paths.get(fileName)));
+		} catch (IOException e){
+			System.out.println("Error in opening room file");
+		}
+	}
+	
+	private static void createRoomFile (){
+		try {
+			for (Room r : rooms){
+				roomOutput.writeObject(r);
+			}
+		} catch (IOException e){
+			System.out.println("Error in writing to room file");
+		}
+	}
+	
+	private static void closeRoomFile(){
+		try {
+			if (roomOutput != null){
+				roomOutput.close();
+			}
+		} catch (IOException e){
+			System.out.println("Error in closing room file");
 		}
 	}
 	
@@ -1156,7 +1806,7 @@ public class roomSystem extends Application {
 		try{
 			staffInput = new ObjectInputStream(Files.newInputStream(Paths.get(fileName)));
 		} catch (IOException e){
-			System.out.println("Error in opening file");
+			System.out.println("Error in opening staff input file");
 		}
 	}
 	
@@ -1168,9 +1818,9 @@ public class roomSystem extends Application {
 			}
 		} catch (EOFException e){
 		} catch (ClassNotFoundException e){
-			System.out.println ("Wrong casting");
+			System.out.println ("Wrong staff casting");
 		} catch (IOException e){
-			System.out.println("Error in processing file");
+			System.out.println("Error in processing staff file");
 		}
 	}
 	
@@ -1180,7 +1830,73 @@ public class roomSystem extends Application {
 				staffInput.close();
 			}
 		} catch (IOException e){
-			System.out.println("Error in closing file");
+			System.out.println("Error in closing staff input file");
+		}
+	}
+	
+	//process student file (read previous/saved data)
+	private static void readStudentFile (String fileName){
+		try{
+			studentInput = new ObjectInputStream(Files.newInputStream(Paths.get(fileName)));
+		} catch (IOException e){
+			System.out.println("Error in opening student input file");
+		}
+	}
+	
+	private static void processStudentFile (){
+		try{
+			while(true){
+				Student s = (Student)(studentInput.readObject());
+				students.add(s);
+			}
+		} catch (EOFException e){
+		} catch (ClassNotFoundException e){
+			System.out.println ("Wrong student casting");
+		} catch (IOException e){
+			System.out.println("Error in processing student file");
+		}
+	}
+	
+	private static void closeStudentInputFile(){
+		try{
+			if(studentInput != null){
+				studentInput.close();
+			}
+		} catch (IOException e){
+			System.out.println("Error in closing student input file");
+		}
+	}
+	
+	//process room file 
+	private static void readRoomFile (String fileName){
+		try{
+			roomInput = new ObjectInputStream(Files.newInputStream(Paths.get(fileName)));
+		} catch (IOException e){
+			System.out.println("Error in opening room input file");
+		}
+	}
+	
+	private static void processRoomFile (){
+		try{
+			while(true){
+				Room r = (Room)(roomInput.readObject());
+				rooms.add(r);
+			}
+		} catch (EOFException e){
+		} catch (ClassNotFoundException e){
+			System.out.println ("Wrong room casting");
+		} catch (IOException e){
+			System.out.println("Error in processing room file");
+		}
+	}
+	
+	private static void closeRoomInputFile(){
+		try{
+			if(roomInput != null){
+				roomInput.close();
+			}
+		} catch (IOException e){
+			System.out.println("Error in closing room input file");
 		}
 	}
 }
