@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 import javafx.geometry.Insets;
 import javafx.collections.*;
 import javafx.scene.control.cell.*;
-import javafx.geometry.HPos;
+import javafx.geometry.*;
 import java.time.LocalDate;
 import java.util.Locale;
 import javafx.util.Callback;
@@ -255,7 +255,9 @@ public class roomSystem extends Application {
     public void start(Stage stage) {
 		//superUserLogInPage();
 		logInPage();
-		//viewStaffAccount();
+		//createRoom();
+		
+	
     }
 	
 	//default login page
@@ -268,7 +270,7 @@ public class roomSystem extends Application {
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
-		grid.setPadding (new Insets(10, 10, 10, 75)); //top, right, bottom, left
+		grid.setPadding (new Insets(10, 10, 10, 10)); //top, right, bottom, left
 		grid.setVgap(8);
 		grid.setHgap(10);
 		
@@ -305,6 +307,7 @@ public class roomSystem extends Application {
 		
 		//add login button
 		Button loginButton = new Button ("Login");
+		loginButton.setMinWidth(57);
 		grid.getChildren().add(loginButton);
 		
 		//adding action lister
@@ -331,6 +334,8 @@ public class roomSystem extends Application {
 		GridPane.setConstraints(signupButton, 1, 3);
 		signupButton.setOnAction (e -> studentOrStaff());
 		grid.getChildren().add(signupButton);
+		grid.setAlignment(Pos.CENTER);
+		
 		vbox.getChildren().add(grid);
 		//set save on close
 		window.setOnCloseRequest(e -> {
@@ -339,7 +344,7 @@ public class roomSystem extends Application {
 		});
 		
 		//add layout to scene and window
-		Scene scene = new Scene (vbox, 450, 310);
+		Scene scene = new Scene (vbox, 450, 325);
 		window.setScene (scene);
 		window.show();
 	}
@@ -428,6 +433,8 @@ public class roomSystem extends Application {
 		
 		//add button 
 		grid.getChildren().add(signupButton);
+		
+		grid.setAlignment(Pos.CENTER);
 		Scene scene = new Scene (grid, 300, 150);
 		window.setScene (scene);
 		window.show();
@@ -482,6 +489,8 @@ public class roomSystem extends Application {
 		
 		//add button 
 		grid.getChildren().add(signupButton);
+		
+		grid.setAlignment(Pos.CENTER);
 		Scene scene = new Scene (grid, 300, 150);
 		window.setScene (scene);
 		window.show();
@@ -545,6 +554,7 @@ public class roomSystem extends Application {
 			window.close();
 		});
 		
+		grid.setAlignment(Pos.CENTER);
 		Scene scene = new Scene (grid, 260, 100);
 		window.setScene (scene);
 		window.show();
@@ -566,10 +576,13 @@ public class roomSystem extends Application {
 		if (currentStaff.getIsSuspended()){
 			Stage window = new Stage();
 			window.setTitle("Suspended");
+			window.setOnCloseRequest(e -> logInPage());
+			
 			Label label = new Label ("Your account has been suspended.");
 			Label label2 = new Label ("Please contact the admin.");
 			
 			GridPane grid = new GridPane();
+			grid.setAlignment(Pos.CENTER);
 			grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 			grid.setVgap(8);
 			grid.setHgap(10);
@@ -600,9 +613,10 @@ public class roomSystem extends Application {
 			vbox.getChildren().add(sp);
 			
 			GridPane grid = new GridPane();
-			grid.setPadding (new Insets(10, 10, 10, 75)); //top, right, bottom, left
+			grid.setPadding (new Insets(10, 10, 10, 10)); //top, right, bottom, left
 			grid.setVgap(8);
 			grid.setHgap(10);
+			grid.setAlignment(Pos.CENTER);
 			
 			//room image
 			Image roomImage = new Image("room.png");
@@ -656,76 +670,103 @@ public class roomSystem extends Application {
 	
 	//Staff window to create room
 	public void createRoom (){
+		//create stage
 		Stage window = new Stage ();
 		window.setTitle("Create new room");
 		
+		//vbox
+		VBox vbox = new VBox(8);
+		
+		//gridpane
 		GridPane grid = new GridPane();
 		grid.setHgap(10);
         grid.setVgap(10);
 		grid.setPadding (new Insets(10, 10, 10, 10));
 		
+		//room name 
 		Label roomName = new Label ("Room Name:");
 		TextField nameInput = new TextField();
 		grid.add(roomName, 0, 0);
 		grid.add(nameInput, 1, 0);
 		
+		//room price
 		Label roomPrice = new Label ("Room Price: ");
 		TextField priceInput = new TextField();
 		grid.add(roomPrice, 0, 1);
 		grid.add(priceInput, 1, 1);
 		
+		//room capacity
 		Label capacity = new Label ("Room Capacity:");
 		TextField capInput = new TextField();
 		grid.add(capacity, 0, 2);
 		grid.add(capInput, 1, 2);
 		
+		//promo code
 		Label promoCode = new Label ("Promo Code:");
 		TextField promoInput = new TextField();
 		grid.add(promoCode, 0, 3);
 		grid.add(promoInput, 1, 3);
 		
-		Label availFrom = new Label("Available From:");
+		//available from whgich date
+		Label availFrom = new Label("Available After:");
 		DatePicker dateInput = new DatePicker();
 		grid.add(availFrom, 0, 4);
 		grid.add(dateInput, 1, 4);
 		
+		//viewable
 		Label viewable = new Label("Viewable:");
-		TextField viewInput = new TextField();
-		viewInput.setPromptText(" 'yes' or 'no'");
+		ChoiceBox<Boolean> choiceBox = new ChoiceBox<>();
+		choiceBox.getItems().add(true);
+		choiceBox.getItems().add(false);
+		choiceBox.setValue(false);
+		//TextField viewInput = new TextField();
+		//viewInput.setPromptText(" 'yes' or 'no'");
 		grid.add(viewable, 0, 5);
-		grid.add(viewInput, 1, 5);
+		grid.add(choiceBox, 1, 5);
 		
 		Button createRoom = new Button ("Create");
 		createRoom.setOnAction(e->{
 			Room r = new Room(nameInput.getText(), capInput.getText(), Double.valueOf(priceInput.getText().trim()),
-					promoInput.getText().trim(), dateInput.getValue(), viewInput.getText().trim().toUpperCase().equals("YES")? true : false);
+					promoInput.getText().trim(), dateInput.getValue(), choiceBox.getValue());
 			rooms.add(r);
 			System.out.println(r.getViewable());
 			window.close();
 		});
-		grid.add(createRoom, 0, 6);
 		
-		Scene scene = new Scene (grid, 300, 300);
+		grid.setAlignment(Pos.CENTER);
+		vbox.setAlignment(Pos.CENTER);
+		
+		vbox.getChildren().addAll(grid, createRoom);
+		
+		Scene scene = new Scene (vbox, 300, 300);
 		window.setScene(scene);
 		window.show();
-		
 	}
 	
 	
 	//Staff room modification details
 	public static void modifyButtonClicked(){
+		//get the room
 		ObservableList<Room> availableRooms;
 		Room roomSelected;
 		
 		availableRooms = table.getItems();
 		roomSelected = table.getSelectionModel().getSelectedItem();
+		
+		//modify the details
 		modifyRoomDetails(roomSelected);
 	}
 	
 	public static void modifyRoomDetails(Room r){
+		//create stage
 		Stage window = new Stage ();
 		window.setTitle("Modify Room Details");
 		
+		//VBox
+		VBox vbox = new VBox (8);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//create grid
 		GridPane grid = new GridPane();
 		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 		grid.setVgap(8);
@@ -799,14 +840,18 @@ public class roomSystem extends Application {
 			} 
 			
 			r.setViewable(choiceBox.getValue());
+			window.close();
+			showAllRooms();
 		});
 		GridPane.setConstraints(change, 0, 6);
 		
 		grid.getChildren().addAll(roomName, nameDetail, roomPrice, priceDetail, roomCapacity, capacityDetail);
 		grid.getChildren().addAll(availableFrom, dateValue, newName, newPrice, newCapacity, newDate, viewable, choiceBox);
-		grid.getChildren().addAll (promo, promoDetail, newPromo, change);
+		grid.getChildren().addAll (promo, promoDetail, newPromo);
+		grid.setAlignment(Pos.CENTER);
+		vbox.getChildren().addAll(grid, change);
 		
-		Scene scene = new Scene (grid, 400, 300);
+		Scene scene = new Scene (vbox, 400, 300);
 		window.setScene(scene);
 		window.show();
 	}
@@ -814,10 +859,13 @@ public class roomSystem extends Application {
 		if (currentStudent.getIsSuspended()){
 			Stage window = new Stage();
 			window.setTitle("Suspended");
+			window.setOnCloseRequest(e -> logInPage());
+			
 			Label label = new Label ("Your account has been suspended.");
 			Label label2 = new Label ("Please contact the admin.");
 			
 			GridPane grid = new GridPane();
+			grid.setAlignment(Pos.CENTER);
 			grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 			grid.setVgap(8);
 			grid.setHgap(10);
@@ -852,7 +900,8 @@ public class roomSystem extends Application {
 			
 			//hbox below stackpane image
 			HBox hbox = new HBox(8);
-			hbox.setPadding (new Insets(10, 10, 10, 75)); //top, right, bottom, left
+			hbox.setPadding (new Insets(10, 10, 10, 10)); //top, right, bottom, left
+			hbox.setAlignment(Pos.CENTER);
 			
 			//room image
 			Image roomImage = new Image("room.png");
@@ -912,7 +961,8 @@ public class roomSystem extends Application {
 			Label noReservation = new Label("You have no reservations currently");
 			vBox.getChildren().add(noReservation);
 			vBox.setPadding (new Insets(10, 10, 10, 10));
-			Scene scene = new Scene (vBox, 300, 200);
+			vBox.setAlignment(Pos.CENTER);
+			Scene scene = new Scene (vBox, 350, 250);
 			window.setScene(scene);
 			window.show();
 		} else {
@@ -933,13 +983,13 @@ public class roomSystem extends Application {
 			double roomPrice = currentStudent.getBookings().get(counter).getPromoUsed() == true? (currentStudent.getBookings().get(counter).getRoom().getPrice() * 0.8) : (currentStudent.getBookings().get(counter).getRoom().getPrice());
 			Label priceValue = new Label(String.valueOf(roomPrice));
 	
-			Label checkInDate = new Label("Check in: ");
+			Label checkInDate = new Label("Check In: ");
 			Label checkInValue = new Label(currentStudent.getBookings().get(counter).getCheckInDate().toString());
 			
-			Label checkOutDate = new Label("Check out: ");
+			Label checkOutDate = new Label("Check Out: ");
 			Label checkOutValue = new Label(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
 			
-			Label totalPrice =  new Label ("Total price: "); 
+			Label totalPrice =  new Label ("Total Price: "); 
 			Label tPriceValue = new Label (String.valueOf(roomPrice * (int)currentStudent.getBookings().get(counter).getCheckInDate()
 									.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
 									
@@ -960,10 +1010,15 @@ public class roomSystem extends Application {
 			
 			//modify button
 			Button modify = new Button ("Modify");
-			modify.setOnAction(e -> studentModifyButtonClicked(currentStudent.getBookings().get(counter)));
+			modify.setMinWidth(60);
+			modify.setOnAction(e -> {
+				studentModifyButtonClicked(currentStudent.getBookings().get(counter));
+				window.close();
+			});
 			
 			//next reservation button
 			Button next = new Button ("Next");
+			next.setMinWidth(50);
 			next.setOnAction(e -> {
 				if (counter != max){
 					reservationNo.setText("Reservation " + String.valueOf(++counter + 1));
@@ -1008,14 +1063,15 @@ public class roomSystem extends Application {
 			grid.add(checkInValue, 1, 3);
 			grid.add(checkOutDate, 0, 4);
 			grid.add(checkOutValue, 1, 4);
-			grid.add(previous, 0, 5);
-			grid.add(next, 1, 5);
-			grid.add(modify, 0, 6);
-			grid.add(delete, 1, 6);
-			grid.add(totalPrice, 0, 7);
-			grid.add(tPriceValue, 1, 7);
+			grid.add(previous, 0, 6);
+			grid.add(next, 1, 6);
+			grid.add(modify, 0, 7);
+			grid.add(delete, 1, 7);
+			grid.add(totalPrice, 0, 5);
+			grid.add(tPriceValue, 1, 5);
 			
-			Scene scene = new Scene (grid);
+			grid.setAlignment(Pos.CENTER);
+			Scene scene = new Scene (grid, 350, 320);
 			window.setScene(scene);
 			window.show();
 		}
@@ -1047,30 +1103,51 @@ public class roomSystem extends Application {
                 };
             }
         };
+		//create stage
 		Stage window = new Stage ();
 		window.setTitle("Student Modify Room Details");
+		window.setOnCloseRequest(e -> showBookedRooms());
 		
+		//Vbox 
+		VBox vbox = new VBox (8);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//create gridpane
 		GridPane grid = new GridPane();
 		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 		grid.setVgap(8);
 		grid.setHgap(10);
 		
+		//room name label and details
 		Label name = new Label ("Name: ");
 		Label nameInput = new Label (b.getRoom().getName());
 		
+		//check in label and details
 		Label checkIn = new Label ("Check in date: ");
 		Label checkInValue = new Label(b.getCheckInDate().toString());
+		
+		//new check in datepicker
 		Label newCheckIn = new Label ("New Check In Date: ");
 		DatePicker newCheckInValue = new DatePicker();
+		newCheckInValue.setEditable(false);
+		newCheckInValue.setValue(b.getCheckInDate());
 		newCheckInValue.setDayCellFactory(dayCellFactory);
 		
+		//check out label and details
 		Label checkOut = new Label ("Check out date: ");
 		Label checkOutValue = new Label(b.getCheckOutDate().toString());
+		
+		//new check out date picker
 		Label newCheckOut = new Label ("New Check Out Date: ");
 		DatePicker newCheckOutValue = new DatePicker();
 		newCheckOutValue.setDayCellFactory(dayCellFactory);
+		newCheckOutValue.setEditable(false);
+		newCheckOutValue.setValue(b.getCheckOutDate());
+		
+		//prompt for error
 		Label prompt = new Label ("");
-	
+		
+		//add components to gridpane
 		grid.add(name, 0, 0);
 		grid.add(nameInput, 1, 0);
 		grid.add(checkIn, 0, 1);
@@ -1081,8 +1158,8 @@ public class roomSystem extends Application {
 		grid.add(checkOutValue, 1, 3);
 		grid.add(newCheckOut, 0, 4);
 		grid.add(newCheckOutValue, 1, 4);
-		grid.add(prompt, 0, 5);
 		
+		//confirm button logic
 		Button confirm = new Button ("Confirm");
 		confirm.setOnAction(e -> {
 			if (newCheckOutValue.getValue().isBefore(newCheckInValue.getValue())){
@@ -1110,6 +1187,7 @@ public class roomSystem extends Application {
 					//edit booking
 					b.setCheckInDate(newCheckInValue.getValue());
 					b.setCheckOutDate(newCheckOutValue.getValue());
+					window.close();
 				} else {
 					//delete the old dates first 
 					b.getRoom().removeReservedDates(oldDates);
@@ -1123,19 +1201,21 @@ public class roomSystem extends Application {
 						//edit booking
 						b.setCheckInDate(newCheckInValue.getValue());
 						b.setCheckOutDate(newCheckOutValue.getValue());
+						showBookedRooms();
+						window.close();
 					} else {
 						//add back the current booking
 						b.getRoom().getReservedDates().add(oldDates);
 						prompt.setText("Not a valid stay");
 					}
 				}
-				
-						
-				
 			}
 		});
-		grid.add(confirm, 0, 6);
-		Scene scene = new Scene (grid, 300, 300);
+		vbox.getChildren().addAll(grid, confirm, prompt);
+		
+		//create scene, set scene
+		grid.setAlignment(Pos.CENTER);
+		Scene scene = new Scene (vbox, 400, 300);
 		window.setScene(scene);
 		window.show();
 	}
@@ -1201,7 +1281,7 @@ public class roomSystem extends Application {
 		
 		VBox vbox = new VBox(20);
         vbox.setStyle("-fx-padding: 10;");
-        Scene scene = new Scene(vbox, 400, 400);
+        Scene scene = new Scene(vbox, 300, 300);
         window.setScene(scene);
 		
 		
@@ -1222,35 +1302,43 @@ public class roomSystem extends Application {
         gridPane.setHgap(10);
         gridPane.setVgap(10);
 		
+		//check in label and datepicker
         Label checkInlabel = new Label("Check-In Date:");
         gridPane.add(checkInlabel, 0, 0);
         GridPane.setHalignment(checkInlabel, HPos.LEFT);
         gridPane.add(checkInDatePicker, 0, 1);
+		
+		//checkout label and date picker
         Label checkOutlabel = new Label("Check-Out Date:");
         gridPane.add(checkOutlabel, 0, 2);
-		
-        GridPane.setHalignment(checkOutlabel, HPos.LEFT);
+		GridPane.setHalignment(checkOutlabel, HPos.LEFT);
         gridPane.add(checkOutDatePicker, 0, 3);
-        vbox.getChildren().add(gridPane);
 		
-		Label promoCode = new Label("Enter Promo Code");
+		//promo code label and text field
+		Label promoCode = new Label("Enter Promo Code:");
 		TextField promoValue = new TextField();
 		gridPane.add(promoCode, 0, 4);
-		gridPane.add(promoValue, 1, 4);
+		gridPane.add(promoValue, 0, 5);
 		
+		//center grid pane
+		gridPane.setAlignment(Pos.CENTER);
+		
+		//add prompt for error
 		Label prompt = new Label ("");
-		gridPane.add(prompt, 0, 6);
+		
+		//book button
 		Button book = new Button ("Book");
 		book.setOnAction(e -> {
-			//if valid stay
-			if (validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue())){
+			//if check out before check in
+			if (checkOutDatePicker.getValue().isBefore(checkInDatePicker.getValue())){
+				prompt.setText("Check Out Cannot Be Before Check In");
+			} else if (validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue())){
 				//if user didn't enter promo code
 				if (promoValue.getText().trim().equals("")){
 					bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue(), false);
 					System.out.println(validStay(r.getReservedDates(), checkInDatePicker.getValue(), checkOutDatePicker.getValue()));
 					window.close();
 				} else if (r.getPromo().equals(promoValue.getText().trim())){ //if promo code is true
-					System.out.println("Promo code true");
 					bookButtonClicked(r, checkInDatePicker.getValue(), checkOutDatePicker.getValue(), true);
 					window.close();
 				} else if (!r.getPromo().equals(promoValue.getText().trim())){ //promo code incorrect
@@ -1260,8 +1348,10 @@ public class roomSystem extends Application {
 				prompt.setText("Not A Valid Stay");
 			}
 		});
-		gridPane.add(book, 0, 5);
 		
+		//add grid to vbox
+        vbox.getChildren().addAll(gridPane, book, prompt);
+		vbox.setAlignment(Pos.CENTER);
 		window.show();
 	}
 	
@@ -1321,11 +1411,21 @@ public class roomSystem extends Application {
 		
 		//modify button
 		Button modify = new Button ("Modify");
-		modify.setOnAction(e -> modifyButtonClicked());
+		modify.setOnAction(e -> {
+				modifyButtonClicked();
+				window.close();
+			});
+		
+		//create HBox to put below table
+		HBox hbox = new HBox (25);
+		hbox.getChildren().addAll(modify, delete);
+		hbox.setAlignment(Pos.CENTER);
 		
 		//create layout
-		VBox vBox = new VBox();
-		vBox.getChildren().addAll(table, delete, modify);
+		VBox vBox = new VBox(8);
+		vBox.getChildren().addAll(table, hbox);
+		vBox.setAlignment(Pos.CENTER);
+		vBox.setPadding (new Insets(0, 0, 10, 0));
 		
 		Scene scene = new Scene (vBox);
 		window.setScene(scene);
@@ -1345,7 +1445,7 @@ public class roomSystem extends Application {
 	}
 	
 	@SuppressWarnings("unchecked")
-	//for students to book room
+	//show available rooms to book
 	public static void showAvailableRooms(){
 		Stage window = new Stage ();
 		window.setTitle("Show available rooms");
@@ -1377,14 +1477,15 @@ public class roomSystem extends Application {
 		//create layout
 		VBox vBox = new VBox(8);
 		vBox.getChildren().addAll(table, view);
-		vBox.setPadding (new Insets(0, 10, 10, 10)); //top, right, bottom, left
+		vBox.setAlignment(Pos.CENTER);
+		vBox.setPadding (new Insets(0, 0, 10, 0)); //top, right, bottom, left
 		
 		Scene scene = new Scene (vBox);
 		window.setScene(scene);
 		window.show();
 	}
 	
-	//delete buton test
+	//delete buton 
 	public static void deleteButtonClicked(){
 		ObservableList<Room>  allRooms;
 		Room roomSelected; 
@@ -1408,42 +1509,59 @@ public class roomSystem extends Application {
 	
 	//display room details
 	public static void displayRoomDetails(Room r){
+		//create stage
 		Stage window = new Stage ();
 		window.setTitle("Room details");
 		
+		//vbox 
+		VBox vbox = new VBox (8);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//grid pane
 		GridPane grid = new GridPane();
 		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 		grid.setVgap(8);
 		grid.setHgap(10);
 		
 		//labels
+		//room name
 		Label roomName = new Label ("Room Name: ");
 		GridPane.setConstraints(roomName, 0, 0); //first column, first row
 		Label nameDetail = new Label (r.getName());
 		GridPane.setConstraints(nameDetail, 1, 0); //second column, first row
 		
-		Label roomPrice = new Label ("Price per night: ");
+		//room price
+		Label roomPrice = new Label ("Price Per Night: ");
 		GridPane.setConstraints(roomPrice, 0, 1); //first column, 2nd row
 		Label priceDetail = new Label ("$" + r.getPrice());
 		GridPane.setConstraints(priceDetail, 1, 1); //second column, first row
 		
-		Label roomCapacity = new Label ("Room capacity: ");
+		//room capacity
+		Label roomCapacity = new Label ("Room Capacity: ");
 		GridPane.setConstraints(roomCapacity, 0, 2); //first column, 3rd row
 		Label capacityDetail = new Label (r.getCapacity());
 		GridPane.setConstraints(capacityDetail, 1, 2); //second column, first row
 		
-		Label availableFrom = new Label ("Available after: ");
+		//available after
+		Label availableFrom = new Label ("Available After: ");
 		GridPane.setConstraints(availableFrom, 0, 3); //first column, 4rd row
 		Label dateValue = new Label (r.getAvailableOn().toString());
 		GridPane.setConstraints(dateValue, 1, 3); //2nd column, 4rd row
+		
+		//add to grid
 		grid.getChildren().addAll(roomName, nameDetail, roomPrice, priceDetail, roomCapacity, capacityDetail);
 		grid.getChildren().addAll(availableFrom, dateValue);
 		
+		//book room button
 		Button bookRoom = new Button ("Book");
 		bookRoom.setOnAction(e -> bookRoom(r));
 		GridPane.setConstraints(bookRoom, 0, 4); //1st column, 5th row
-		grid.getChildren().addAll(bookRoom);
-		Scene scene = new Scene (grid, 300, 300);
+		
+		grid.setAlignment(Pos.CENTER);
+		vbox.getChildren().addAll(grid, bookRoom);
+		
+		//set scene 
+		Scene scene = new Scene (vbox, 250, 250);
 		window.setScene(scene);
 		window.show();
 	}
@@ -1452,6 +1570,19 @@ public class roomSystem extends Application {
 	public void superUserLogInPage(){
 		Stage window = new Stage(); 
 		window.setTitle("SuperUser Login Page");
+		
+		//uow logo
+		Image image = new Image("UOWLogo.png");
+		ImageView imageView = new ImageView();
+		imageView.setImage(image);
+		imageView.setFitWidth(150);
+		imageView.setPreserveRatio(true);
+		imageView.setSmooth(true);
+		
+		//Vbox 
+		VBox vbox = new VBox(8);
+		vbox.getChildren().add(imageView);
+		vbox.setAlignment(Pos.CENTER);
 		
 		//grid layout
 		GridPane grid = new GridPane();
@@ -1495,22 +1626,28 @@ public class roomSystem extends Application {
 		grid.add(manageAccount, 0, 2);
 		grid.add(manageStaff, 0, 3);
 		grid.add(manageStudent, 1, 3);
-		grid.add(logout, 0, 4);
-		
-		Scene scene = new Scene (grid, 400, 300);
+		grid.setAlignment(Pos.CENTER);
+		vbox.getChildren().addAll(grid, logout);
+		Scene scene = new Scene (vbox, 400, 375);
 		window.setScene(scene);
 		window.show();
 	}
 	
 	public void viewStaffAccount(){
+		//Create stage
 		Stage window = new Stage(); 
 		window.setTitle("SuperUser View Staff");
+		
+		//vbox
+		VBox vbox = new VBox(8);
+		vbox.setAlignment(Pos.CENTER);
 		
 		//grid layout
 		GridPane grid = new GridPane();
 		grid.setPadding (new Insets(10, 10, 10, 10)); 
 		grid.setVgap(8);
 		grid.setHgap(10);
+		grid.setAlignment(Pos.CENTER);
 		
 		//counter 
 		counter = 0; 
@@ -1544,6 +1681,7 @@ public class roomSystem extends Application {
 		
 		//next button
 		Button next = new Button ("Next");
+		next.setMinWidth(40);
 		next.setOnAction(e -> {
 			if (counter != max){
 				staffNo.setText("Staff No " + (++counter + 1));
@@ -1558,6 +1696,7 @@ public class roomSystem extends Application {
 		
 		//prev button
 		Button previous = new Button ("Prev");
+		previous.setMinWidth(40);
 		previous.setOnAction(e -> {
 			if (counter != 0){
 				staffNo.setText("Staff No " + (--counter + 1));
@@ -1583,10 +1722,13 @@ public class roomSystem extends Application {
 		grid.add(suspended, 0, 5);
 		grid.add(isSuspended, 1, 5);
 		grid.add(suspend, 2, 5);
-		grid.add(previous, 0, 6);
-		grid.add(next, 1, 6);
 		
-		Scene scene = new Scene (grid, 400, 300);
+		HBox hbox = new HBox (10);
+		hbox.getChildren().addAll(previous, next);
+		hbox.setAlignment(Pos.CENTER);
+		
+		vbox.getChildren().addAll(grid, hbox);
+		Scene scene = new Scene (vbox, 400, 300);
 		window.setScene(scene);
 		window.show();
 	}
@@ -1596,11 +1738,16 @@ public class roomSystem extends Application {
 		Stage window = new Stage(); 
 		window.setTitle("SuperUser View Student");
 		
+		//vbox
+		VBox vbox = new VBox(8);
+		vbox.setAlignment(Pos.CENTER);
+		
 		//grid layout
 		GridPane grid = new GridPane();
 		grid.setPadding (new Insets(10, 10, 10, 10)); 
 		grid.setVgap(8);
 		grid.setHgap(10);
+		grid.setAlignment(Pos.CENTER);
 		
 		//counter 
 		counter = 0; 
@@ -1634,6 +1781,7 @@ public class roomSystem extends Application {
 		
 		//next button
 		Button next = new Button ("Next");
+		next.setMinWidth(40);
 		next.setOnAction(e -> {
 			if (counter != max){
 				studentNo.setText("Student No " + (++counter + 1));
@@ -1648,6 +1796,7 @@ public class roomSystem extends Application {
 		
 		//prev button
 		Button previous = new Button ("Prev");
+		previous.setMinWidth(40);
 		previous.setOnAction(e -> {
 			if (counter != 0){
 				studentNo.setText("Student No " + (--counter + 1));
@@ -1673,10 +1822,13 @@ public class roomSystem extends Application {
 		grid.add(suspended, 0, 5);
 		grid.add(isSuspended, 1, 5);
 		grid.add(suspend, 2, 5);
-		grid.add(previous, 0, 6);
-		grid.add(next, 1, 6);
 		
-		Scene scene = new Scene (grid, 400, 300);
+		HBox hbox = new HBox (10);
+		hbox.getChildren().addAll(previous, next);
+		hbox.setAlignment(Pos.CENTER);
+		
+		vbox.getChildren().addAll(grid, hbox);
+		Scene scene = new Scene (vbox, 400, 300);
 		window.setScene(scene);
 		window.show();
 	}
@@ -1722,9 +1874,7 @@ public class roomSystem extends Application {
 	}
 	
 	private static void createStaffFile (){
-		try {
-			//staffOutput.writeObject (new Staff ("Kqirk", 1234));
-			staffOutput.writeObject (new Staff ("Admin", "1234"));
+		try {		
 			for (Staff s : staffs){
 				staffOutput.writeObject(s);
 			}
