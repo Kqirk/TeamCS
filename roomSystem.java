@@ -7,7 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import javafx.geometry.Insets;
 import javafx.collections.*;
 import javafx.scene.control.cell.*;
@@ -46,8 +46,16 @@ class Student implements Serializable{
 		return name;
 	}
 	
+	public void setName(String name){
+		this.name = name;
+	}
+	
 	public String getPassword(){
 		return password;
+	}
+	
+	public void setPassword(String password){
+		this.password = password;
 	}
 	
 	public String getRole (){
@@ -119,8 +127,16 @@ class Staff implements Serializable{
 		return name;
 	}
 	
+	public void setName(String name){
+		this.name = name;
+	}
+	
 	public String getPassword(){
 		return password;
+	}
+	
+	public void setPassword(String password){
+		this.password = password;
 	}
 	
 	public String getRole (){
@@ -161,6 +177,7 @@ class Booking implements Serializable{
 	private LocalDate checkInDate;
 	private LocalDate checkOutDate; 
 	private boolean promoUsed; //check if promo is used
+	private boolean isPaid; 
 	
 	public Booking (Student student, Room room, LocalDate checkInDate, LocalDate checkOutDate){
 		this.student = student;
@@ -168,6 +185,7 @@ class Booking implements Serializable{
 		this.roomName = room.getName();
 		this.checkInDate = checkInDate;
 		this.checkOutDate = checkOutDate; 
+		this.isPaid = false;
 	}
 	
 	public Student getStudent(){
@@ -217,6 +235,14 @@ class Booking implements Serializable{
 	public void setPromoUsed(boolean promoUsed){
 		this.promoUsed = promoUsed;
 	}
+	
+	public boolean getIsPaid() {
+		return isPaid;
+	}
+	
+	public void setIsPaid(boolean isPaid){
+		this.isPaid = isPaid;
+	}
 }
 
 public class roomSystem extends Application {
@@ -255,9 +281,6 @@ public class roomSystem extends Application {
     public void start(Stage stage) {
 		//superUserLogInPage();
 		logInPage();
-		//createRoom();
-		
-	
     }
 	
 	//default login page
@@ -276,6 +299,7 @@ public class roomSystem extends Application {
 		
 		//Vbox layout to bandaid 
 		VBox vbox = new VBox();
+		vbox.setAlignment(Pos.CENTER);
 		
 		//image 
 		Image image = new Image("UOWLogo.png");
@@ -284,9 +308,11 @@ public class roomSystem extends Application {
 		imageView.setFitWidth(150);
 		imageView.setPreserveRatio(true);
 		imageView.setSmooth(true);
-		StackPane sp = new StackPane();
-		sp.getChildren().add(imageView);
-		vbox.getChildren().add(sp);
+	
+		vbox.getChildren().add(imageView);
+		
+		//prompt text
+		Label prompt = new Label();
 		
 		//labels
 		Label nameLabel = new Label ("Username");
@@ -318,7 +344,7 @@ public class roomSystem extends Application {
 			} else if(verifyLogin (nameInput.getText().trim(), passInput.getText().trim())){
 				window.close();
 			} else {
-				System.out.println("Username or password is incorrect");
+				prompt.setText("Username or password is incorrect");
 			}
 		});
 		
@@ -336,15 +362,17 @@ public class roomSystem extends Application {
 		grid.getChildren().add(signupButton);
 		grid.setAlignment(Pos.CENTER);
 		
-		vbox.getChildren().add(grid);
+		vbox.getChildren().addAll(grid, prompt);
+		
 		//set save on close
 		window.setOnCloseRequest(e -> {
 			saveSession();
 			System.out.println("Session saved");
 		});
 		
+		
 		//add layout to scene and window
-		Scene scene = new Scene (vbox, 450, 325);
+		Scene scene = new Scene (vbox, 450, 350);
 		window.setScene (scene);
 		window.show();
 	}
@@ -390,13 +418,21 @@ public class roomSystem extends Application {
 		Stage window = new Stage ();
 		
 		//set title of stage
-		window.setTitle ("Staff Sign Up");
+		window.setTitle ("Create Staff Account");
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
+		grid.setAlignment(Pos.CENTER);
 		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 		grid.setVgap(8);
 		grid.setHgap(10);
+		
+		//VBox
+		VBox vbox = new VBox(10);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//prompt
+		Label prompt = new Label();
 		
 		//labels
 		Label nameLabel = new Label ("Username");
@@ -425,17 +461,13 @@ public class roomSystem extends Application {
 				signUpStaff(nameInput.getText().trim(), passInput.getText().trim());
 				window.close();
 			} else {
-				System.out.println("User already exists");
+				prompt.setText("User already exists");
 			}
 		});
+
+		vbox.getChildren().addAll(grid, signupButton, prompt);
 		
-		GridPane.setConstraints(signupButton, 1, 2); //first column, third row
-		
-		//add button 
-		grid.getChildren().add(signupButton);
-		
-		grid.setAlignment(Pos.CENTER);
-		Scene scene = new Scene (grid, 300, 150);
+		Scene scene = new Scene (vbox, 300, 200);
 		window.setScene (scene);
 		window.show();
 	}
@@ -446,13 +478,21 @@ public class roomSystem extends Application {
 		Stage window = new Stage ();
 		
 		//set title of stage
-		window.setTitle ("Student Sign Up");
+		window.setTitle ("Create Student Account");
 		
 		//create GridPane layout 
 		GridPane grid = new GridPane();
+		grid.setAlignment(Pos.CENTER);
 		grid.setPadding (new Insets(10, 10, 10, 10)); //padding all four corners
 		grid.setVgap(8);
 		grid.setHgap(10);
+		
+		//VBox
+		VBox vbox = new VBox(10);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//prompt
+		Label prompt = new Label();
 		
 		//labels
 		Label nameLabel = new Label ("Username");
@@ -481,17 +521,13 @@ public class roomSystem extends Application {
 				signUpStudent(nameInput.getText().trim(), passInput.getText().trim());
 				window.close();
 			} else {
-				System.out.println("Username already exists");
+				prompt.setText("Username already exists");
 			}
 		});
 		
-		GridPane.setConstraints(signupButton, 1, 2); //first column, third row
+		vbox.getChildren().addAll(grid, signupButton, prompt);
 		
-		//add button 
-		grid.getChildren().add(signupButton);
-		
-		grid.setAlignment(Pos.CENTER);
-		Scene scene = new Scene (grid, 300, 150);
+		Scene scene = new Scene (vbox, 300, 200);
 		window.setScene (scene);
 		window.show();
 	}
@@ -597,6 +633,10 @@ public class roomSystem extends Application {
 		} else {
 			Stage window = new Stage ();
 			window.setTitle("Staff Login Page");
+			window.setOnCloseRequest(e -> {
+				saveSession();
+				System.out.println("Session saved");
+			});
 			
 			//uow logo
 			Image image = new Image("UOWLogo.png");
@@ -855,6 +895,7 @@ public class roomSystem extends Application {
 		window.setScene(scene);
 		window.show();
 	}
+	
 	public void studentLogInPage(){
 		if (currentStudent.getIsSuspended()){
 			Stage window = new Stage();
@@ -880,8 +921,11 @@ public class roomSystem extends Application {
 		} else {
 			//create stage
 			Stage window = new Stage ();
-			window.setTitle("(Student) You have logged in");
-			
+			window.setTitle("Welcome ," + currentStudent.getName());
+			window.setOnCloseRequest(e -> {
+				saveSession();
+				System.out.println("Session saved");
+			});
 			//uow logo
 			Image image = new Image("UOWLogo.png");
 			ImageView imageView = new ImageView();
@@ -971,7 +1015,9 @@ public class roomSystem extends Application {
 			final int max = currentStudent.getBookings().size() - 1;
 			
 			Stage window = new Stage ();
-			window.setTitle("Show booked rooms");
+			window.initModality(Modality.APPLICATION_MODAL);
+			
+			window.setTitle("Your Bookings");
 			
 			Label reservationNo = new Label ("Reservation " + String.valueOf(counter + 1));
 			
@@ -1013,7 +1059,16 @@ public class roomSystem extends Application {
 			modify.setMinWidth(60);
 			modify.setOnAction(e -> {
 				studentModifyButtonClicked(currentStudent.getBookings().get(counter));
-				window.close();
+			});
+			
+			//paid 
+			Label isPaid = new Label("Room Paid: ");
+			Label isPaidValue = new Label(currentStudent.getBookings().get(counter).getIsPaid()? "Yes" : "No");
+			Button pay = new Button ("Pay");
+			pay.setOnAction(e -> {
+				if (!currentStudent.getBookings().get(counter).getIsPaid()){
+					paymentWindow(currentStudent.getBookings().get(counter));
+				}
 			});
 			
 			//next reservation button
@@ -1029,6 +1084,7 @@ public class roomSystem extends Application {
 					checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
 					tPriceValue.setText(String.valueOf(roomsPrice * (int)currentStudent.getBookings().get(counter).getCheckInDate()
 									.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
+					isPaidValue.setText(currentStudent.getBookings().get(counter).getIsPaid()? "Yes" : "No");
 				}
 			});
 			
@@ -1044,7 +1100,29 @@ public class roomSystem extends Application {
 					checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
 					tPriceValue.setText(String.valueOf(roomsPrice * (int)currentStudent.getBookings().get(counter).getCheckInDate()
 									.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
+					isPaidValue.setText(currentStudent.getBookings().get(counter).getIsPaid()? "Yes" : "No");
 				}
+			});
+			
+			//refresh button
+			Image image = new Image("refresh.png");
+			ImageView imageView = new ImageView();
+			imageView.setImage(image);
+			imageView.setFitWidth(15);
+			imageView.setFitHeight(15);
+			imageView.setPreserveRatio(true);
+			imageView.setSmooth(true);
+			Button refresh = new Button ("", imageView);
+			refresh.setOnAction(e -> {
+				reservationNo.setText("Reservation " + String.valueOf(counter + 1));
+				nameValue.setText(currentStudent.getBookings().get(counter).getRoom().getName());
+				double roomsPrice = currentStudent.getBookings().get(counter).getPromoUsed() == true? (currentStudent.getBookings().get(counter).getRoom().getPrice() * 0.8) : (currentStudent.getBookings().get(counter).getRoom().getPrice());
+				priceValue.setText(String.valueOf(roomsPrice));
+				checkInValue.setText(currentStudent.getBookings().get(counter).getCheckInDate().toString());
+				checkOutValue.setText(currentStudent.getBookings().get(counter).getCheckOutDate().toString());
+				tPriceValue.setText(String.valueOf(roomsPrice * (int)currentStudent.getBookings().get(counter).getCheckInDate()
+									.until(currentStudent.getBookings().get(counter).getCheckOutDate(), ChronoUnit.DAYS)));
+				isPaidValue.setText(currentStudent.getBookings().get(counter).getIsPaid()? "Yes" : "No");
 			});
 			
 			//create layout
@@ -1063,18 +1141,53 @@ public class roomSystem extends Application {
 			grid.add(checkInValue, 1, 3);
 			grid.add(checkOutDate, 0, 4);
 			grid.add(checkOutValue, 1, 4);
-			grid.add(previous, 0, 6);
-			grid.add(next, 1, 6);
-			grid.add(modify, 0, 7);
-			grid.add(delete, 1, 7);
 			grid.add(totalPrice, 0, 5);
 			grid.add(tPriceValue, 1, 5);
+			grid.add(isPaid, 0, 6);
+			grid.add(isPaidValue, 1, 6);
+			grid.add(pay, 2, 6);
+			
+			//VBox
+			VBox vbox = new VBox(8);
+			vbox.setAlignment(Pos.CENTER);
+			
+			//hbox
+			HBox hbox = new HBox (10); //row 1 
+			hbox.setAlignment(Pos.CENTER);
+			HBox hbox2 = new HBox (10); //row 2
+			hbox2.setAlignment(Pos.CENTER);
+			hbox.getChildren().addAll(previous, next);
+			hbox2.getChildren().addAll(modify, delete);
 			
 			grid.setAlignment(Pos.CENTER);
-			Scene scene = new Scene (grid, 350, 320);
+			vbox.getChildren().addAll(grid, hbox, hbox2, refresh);
+			
+			Scene scene = new Scene (vbox, 350, 320);
 			window.setScene(scene);
-			window.show();
+			window.showAndWait();
 		}
+	}
+	
+	//payment window
+	public void paymentWindow(Booking b){
+		//create stage
+		Stage window = new Stage();
+		window.setTitle("Payment Successful");
+		window.initModality(Modality.APPLICATION_MODAL);
+		
+		//vbox
+		VBox vbox = new VBox(10);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//message
+		Label text = new Label("Payment has been successfully made");
+		b.setIsPaid(true);
+		vbox.getChildren().addAll(text);
+		
+		//scene
+		Scene scene = new Scene (vbox, 250, 250);
+		window.setScene(scene);
+		window.showAndWait();
 	}
 	
 	//student modify function
@@ -1105,8 +1218,9 @@ public class roomSystem extends Application {
         };
 		//create stage
 		Stage window = new Stage ();
-		window.setTitle("Student Modify Room Details");
+		window.setTitle("Modify Room Details");
 		window.setOnCloseRequest(e -> showBookedRooms());
+		window.initModality(Modality.APPLICATION_MODAL);
 		
 		//Vbox 
 		VBox vbox = new VBox (8);
@@ -1201,7 +1315,6 @@ public class roomSystem extends Application {
 						//edit booking
 						b.setCheckInDate(newCheckInValue.getValue());
 						b.setCheckOutDate(newCheckOutValue.getValue());
-						showBookedRooms();
 						window.close();
 					} else {
 						//add back the current booking
@@ -1217,7 +1330,7 @@ public class roomSystem extends Application {
 		grid.setAlignment(Pos.CENTER);
 		Scene scene = new Scene (vbox, 400, 300);
 		window.setScene(scene);
-		window.show();
+		window.showAndWait();
 	}
 	
 	public ObservableList<Booking> getReservations(){
@@ -1278,6 +1391,7 @@ public class roomSystem extends Application {
 		
 		//set title of stage
 		window.setTitle ("Book Room");
+		window.initModality(Modality.APPLICATION_MODAL);
 		
 		VBox vbox = new VBox(20);
         vbox.setStyle("-fx-padding: 10;");
@@ -1352,7 +1466,7 @@ public class roomSystem extends Application {
 		//add grid to vbox
         vbox.getChildren().addAll(gridPane, book, prompt);
 		vbox.setAlignment(Pos.CENTER);
-		window.show();
+		window.showAndWait();
 	}
 	
 	public static boolean validStay (ArrayList<LocalDate[]> dates, LocalDate checkIn, LocalDate checkOut){
@@ -1512,6 +1626,7 @@ public class roomSystem extends Application {
 		//create stage
 		Stage window = new Stage ();
 		window.setTitle("Room details");
+		window.initModality(Modality.APPLICATION_MODAL);
 		
 		//vbox 
 		VBox vbox = new VBox (8);
@@ -1563,13 +1678,17 @@ public class roomSystem extends Application {
 		//set scene 
 		Scene scene = new Scene (vbox, 250, 250);
 		window.setScene(scene);
-		window.show();
+		window.showAndWait();
 	}
 	
 	//super user methods/windows
 	public void superUserLogInPage(){
 		Stage window = new Stage(); 
 		window.setTitle("SuperUser Login Page");
+		window.setOnCloseRequest(e -> {
+			saveSession();
+			System.out.println("Session saved");
+		});
 		
 		//uow logo
 		Image image = new Image("UOWLogo.png");
@@ -1636,7 +1755,7 @@ public class roomSystem extends Application {
 	public void viewStaffAccount(){
 		//Create stage
 		Stage window = new Stage(); 
-		window.setTitle("SuperUser View Staff");
+		window.setTitle("Staff Overview");
 		
 		//vbox
 		VBox vbox = new VBox(8);
@@ -1710,6 +1829,32 @@ public class roomSystem extends Application {
 			
 		});
 		
+		//edit button
+		Button edit = new Button ("Edit");
+		edit.setMinWidth(40);
+		edit.setOnAction(e -> {
+			editStaffAccount(staffs.get(counter));
+		});
+		
+		//refresh button
+		Image image = new Image("refresh.png");
+		ImageView imageView = new ImageView();
+		imageView.setImage(image);
+		imageView.setFitWidth(15);
+		imageView.setFitHeight(15);
+		imageView.setPreserveRatio(true);
+		imageView.setSmooth(true);
+		Button refresh = new Button ("", imageView);
+		refresh.setOnAction(e -> {
+			staffNo.setText("Staff No " + (counter + 1));
+			staffName.setText(staffs.get(counter).getName());
+			staffPassword.setText(staffs.get(counter).getPassword());
+			lastLogin.setText(staffs.get(counter).getLogin());
+			lastLogout.setText(staffs.get(counter).getLogout());
+			isSuspended.setText(staffs.get(counter).getIsSuspended()? "Yes" : "No");
+			suspend.setText(staffs.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+		});
+		
 		grid.add(staffNo, 0, 0);
 		grid.add(name, 0, 1);
 		grid.add(staffName, 1, 1);
@@ -1722,13 +1867,86 @@ public class roomSystem extends Application {
 		grid.add(suspended, 0, 5);
 		grid.add(isSuspended, 1, 5);
 		grid.add(suspend, 2, 5);
+		grid.add(edit, 2, 0);
 		
 		HBox hbox = new HBox (10);
 		hbox.getChildren().addAll(previous, next);
 		hbox.setAlignment(Pos.CENTER);
 		
-		vbox.getChildren().addAll(grid, hbox);
+		vbox.getChildren().addAll(grid, hbox, refresh);
 		Scene scene = new Scene (vbox, 400, 300);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	//edit staff account
+	public void editStaffAccount(Staff s){
+		//Create stage
+		Stage window = new Stage(); 
+		window.setTitle("Edit " + s.getName() + " Info");
+		
+		//HBox 
+		HBox hbox = new HBox (10);
+		hbox.setAlignment(Pos.CENTER);
+		
+		//vbox
+		VBox vbox = new VBox(8);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//grid layout
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); 
+		grid.setVgap(8);
+		grid.setHgap(10);
+		grid.setAlignment(Pos.CENTER);
+		
+		//name
+		Label name = new Label ("Name:");
+		Label currentName = new Label (s.getName());
+		TextField newName = new TextField();
+		newName.setText(s.getName());
+		
+		//password
+		Label password = new Label("Password:");
+		Label currentPassword = new Label(s.getPassword());
+		TextField newPassword = new TextField();
+		newPassword.setText(s.getPassword());
+		
+		//prompt text
+		Label prompt = new Label();
+		
+		//add to grid layout
+		grid.add(name, 0, 0);
+		grid.add(currentName, 1, 0);
+		grid.add(newName, 2, 0);
+		grid.add(password, 0, 1);
+		grid.add(currentPassword, 1, 1);
+		grid.add(newPassword, 2, 1);
+		
+		Button confirm = new Button ("Confirm");
+		confirm.setOnAction(e -> {
+			if (userExists(newName.getText().trim())){
+				prompt.setText("Username already exists");
+			} else {
+				if (!newName.getText().trim().equals("")){
+					s.setName(newName.getText().trim());
+					currentName.setText(s.getName());
+					prompt.setText("");
+				} 
+				if (!newPassword.getText().trim().equals("")){
+					s.setPassword(newPassword.getText().trim());
+					currentPassword.setText(s.getPassword());
+					prompt.setText("");
+				}
+			}
+		});
+		
+		Button exit = new Button("Exit");
+		exit.setOnAction(e -> window.close());
+		hbox.getChildren().addAll(confirm, exit);
+		
+		vbox.getChildren().addAll(grid, hbox, prompt);
+		Scene scene = new Scene (vbox, 350, 250);
 		window.setScene(scene);
 		window.show();
 	}
@@ -1736,7 +1954,7 @@ public class roomSystem extends Application {
 	//view student account
 	public void viewStudentAccount(){
 		Stage window = new Stage(); 
-		window.setTitle("SuperUser View Student");
+		window.setTitle("Student Overview");
 		
 		//vbox
 		VBox vbox = new VBox(8);
@@ -1810,6 +2028,33 @@ public class roomSystem extends Application {
 			
 		});
 		
+		//edit button
+		Button edit = new Button ("Edit");
+		edit.setMinWidth(40);
+		edit.setOnAction(e -> {
+			editStudentAccount(students.get(counter));
+		});
+		
+		
+		//refresh button
+		Image image = new Image("refresh.png");
+		ImageView imageView = new ImageView();
+		imageView.setImage(image);
+		imageView.setFitWidth(15);
+		imageView.setFitHeight(15);
+		imageView.setPreserveRatio(true);
+		imageView.setSmooth(true);
+		Button refresh = new Button ("", imageView);
+		refresh.setOnAction(e -> {
+			studentNo.setText("Student No " + (counter + 1));
+			studentName.setText(students.get(counter).getName());
+			studentPassword.setText(students.get(counter).getPassword());
+			lastLogin.setText(students.get(counter).getLogin());
+			lastLogout.setText(students.get(counter).getLogout());
+			isSuspended.setText(students.get(counter).getIsSuspended()? "Yes" : "No");
+			suspend.setText(students.get(counter).getIsSuspended()? "Unsuspend" : "Suspend");
+		});
+		
 		grid.add(studentNo, 0, 0);
 		grid.add(name, 0, 1);
 		grid.add(studentName, 1, 1);
@@ -1822,13 +2067,91 @@ public class roomSystem extends Application {
 		grid.add(suspended, 0, 5);
 		grid.add(isSuspended, 1, 5);
 		grid.add(suspend, 2, 5);
+		grid.add(edit, 2, 0);
 		
 		HBox hbox = new HBox (10);
 		hbox.getChildren().addAll(previous, next);
 		hbox.setAlignment(Pos.CENTER);
 		
-		vbox.getChildren().addAll(grid, hbox);
+		vbox.getChildren().addAll(grid, hbox, refresh);
 		Scene scene = new Scene (vbox, 400, 300);
+		window.setScene(scene);
+		window.show();
+	}
+	
+	//edit student accoutn
+	public void editStudentAccount(Student s){
+		//Create stage
+		Stage window = new Stage(); 
+		window.setTitle("Edit " + s.getName() + " Info");
+		
+		//HBox 
+		HBox hbox = new HBox (10);
+		hbox.setAlignment(Pos.CENTER);
+		
+		//vbox
+		VBox vbox = new VBox(8);
+		vbox.setAlignment(Pos.CENTER);
+		
+		//grid layout
+		GridPane grid = new GridPane();
+		grid.setPadding (new Insets(10, 10, 10, 10)); 
+		grid.setVgap(8);
+		grid.setHgap(10);
+		grid.setAlignment(Pos.CENTER);
+		
+		//name
+		Label name = new Label ("Name:");
+		Label currentName = new Label (s.getName());
+		TextField newName = new TextField();
+		newName.setText(s.getName());
+		
+		//password
+		Label password = new Label("Password:");
+		Label currentPassword = new Label(s.getPassword());
+		TextField newPassword = new TextField();
+		newPassword.setText(s.getPassword());
+		
+		//prompt text
+		Label prompt = new Label();
+		
+		//add to grid layout
+		grid.add(name, 0, 0);
+		grid.add(currentName, 1, 0);
+		grid.add(newName, 2, 0);
+		grid.add(password, 0, 1);
+		grid.add(currentPassword, 1, 1);
+		grid.add(newPassword, 2, 1);
+		
+		//confirm changes
+		Button confirm = new Button ("Confirm");
+		confirm.setOnAction(e -> {
+			if (userExists(newName.getText().trim())){
+				prompt.setText("Username already exists");
+			} else {
+				if (!newName.getText().trim().equals("")){
+					s.setName(newName.getText().trim());
+					currentName.setText(s.getName());
+					prompt.setText("");
+				} 
+				if (!newPassword.getText().trim().equals("")){
+					s.setPassword(newPassword.getText().trim());
+					currentPassword.setText(s.getPassword());
+					prompt.setText("");
+				}
+			}
+		});
+		
+		//exit button
+		Button exit = new Button("Exit");
+		exit.setOnAction(e -> window.close());
+		
+		//add to layout
+		hbox.getChildren().addAll(confirm, exit);
+		vbox.getChildren().addAll(grid, hbox, prompt);
+		
+		//scene and show window
+		Scene scene = new Scene (vbox, 350, 250);
 		window.setScene(scene);
 		window.show();
 	}
